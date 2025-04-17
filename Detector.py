@@ -30,3 +30,58 @@ class Detector:
                 # Draw the landmarks
                 self.mp_draw.draw_landmarks(frame, hand_landmarks, self.mp_hands.HAND_CONNECTIONS)
         return frame
+
+        def detect_symbol(self, landmarks):
+        FINGER_TIPS = [4, 8, 12, 16, 20]
+    
+        if landmarks.multi_hand_landmarks and landmarks.multi_handedness:
+            for idx, hand_info in enumerate(landmarks.multi_handedness):
+                label = hand_info.classification[0].label
+                fingers = []
+                hand_landmarks = landmarks.multi_hand_landmarks[idx]
+    
+                if label == "Right":
+    
+                    # Thumb
+                    thumb_up = hand_landmarks.landmark[FINGER_TIPS[0]].x > hand_landmarks.landmark[FINGER_TIPS[0] - 1].x
+                    fingers.append(1 if thumb_up else 0)
+    
+                    # Other fingers
+                    for tip in FINGER_TIPS[1:]:
+                        fingers.append(1 if hand_landmarks.landmark[tip].y < hand_landmarks.landmark[tip - 2].y else 0)
+    
+                    # Map to numbers
+                    if fingers == [0, 0, 0, 0, 0]: return 0
+                    if fingers == [0, 1, 0, 0, 0]: return 1
+                    if fingers == [0, 1, 1, 0, 0]: return 2
+                    if fingers == [0, 1, 1, 1, 0]: return 3
+                    if fingers == [0, 1, 1, 1, 1]: return 4
+                    if fingers == [1, 1, 1, 1, 1]: return 5
+                    if fingers == [1, 0, 0, 0, 1]: return 6
+                    if fingers == [1, 1, 0, 0, 1]: return 7
+                    if fingers == [1, 1, 1, 0, 1]: return 8
+                    if fingers == [0, 1, 0, 0, 1]: return 9
+    
+                elif label == "Left":
+
+                    # Thumb
+                    thumb_up = hand_landmarks.landmark[FINGER_TIPS[0]].x < hand_landmarks.landmark[FINGER_TIPS[0] - 1].x
+                    fingers.append(1 if thumb_up else 0)
+    
+                    # Other fingers
+                    for tip in FINGER_TIPS[1:]:
+                        fingers.append(1 if hand_landmarks.landmark[tip].y < hand_landmarks.landmark[tip - 2].y else 0)
+    
+                    # Map to operators
+                    if fingers == [0, 0, 0, 0, 0]: return '='
+                    if fingers == [0, 1, 0, 0, 0]: return '+'
+                    if fingers == [0, 1, 1, 0, 0]: return '-'
+                    if fingers == [0, 1, 1, 1, 0]: return '*'
+                    if fingers == [0, 1, 1, 1, 1]: return '/'
+                    if fingers == [1, 1, 1, 1, 1]: return '^'
+                    if fingers == [1, 0, 0, 0, 1]: return '('
+                    if fingers == [1, 1, 0, 0, 1]: return ')'
+                    if fingers == [1, 1, 1, 0, 1]: return 'E'
+                    if fingers == [0, 1, 0, 0, 1]: return 'X'
+    
+        return -1

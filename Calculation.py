@@ -1,4 +1,3 @@
-# EXPLORE IT
 class Calculation:
     def __init__(self):
         self.operators = []
@@ -12,11 +11,20 @@ class Calculation:
         return 0
     
     def apply_operation(self):
-        if len(self.operators) == 0 or len(self.operands) == 0:
-            return None
+        if len(self.operators) == 0:
+            return "Invalid Expression"
+
+        if len(self.operands) < 2:
+            self.operators.pop()
+            return "Invalid Expression"
+        
+        print(f"Operends: {self.operands}")
+        print(f"Operators: {self.operators}")
+
         right = self.operands.pop()
         left = self.operands.pop()
         op = self.operators.pop()
+
         if op == '+':
             return left + right
         elif op == '-':
