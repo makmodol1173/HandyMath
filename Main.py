@@ -23,7 +23,7 @@ class Main:
         is_activated = False
         mode = None
         last_detected_time = 0
-        debounce_interval = 0.5
+        debounce_interval = 3
 
         while cap.isOpened():
             success, frame = cap.read()
@@ -60,7 +60,15 @@ class Main:
                 y_pos = 50
                 cv2.putText(frame, text, (x_pos, y_pos), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2, cv2.LINE_AA)
 
-                interface.show_main_menu(frame)
+                if mode is None:
+                   interface.show_main_menu(frame)
+                else:
+                    text = f"Mode: {mode}"
+                    (text_width, text_height), _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 1, 2)
+                    x_pos = frame.shape[1] - text_width - 30
+                    y_pos = 100
+                    cv2.putText(frame, text, (x_pos, y_pos), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2, cv2.LINE_AA)
+
                 # Main menu selection
                 symbol = detector.detect_symbol(landmarks)
                 print(f"Detected Symbol: {symbol}")
@@ -77,13 +85,6 @@ class Main:
                         elif symbol == 4:
                             is_activated = False
                             mode = None
-
-            if is_activated and mode is not None:
-                text = f"{mode} Mode Activated"
-                (text_width, text_height), _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 1, 2)
-                x_pos = 50
-                y_pos = 50
-                cv2.putText(frame, text, (x_pos, y_pos), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2, cv2.LINE_AA)
 
             cv2.imshow('HandyMath', frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
