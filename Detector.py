@@ -31,7 +31,7 @@ class Detector:
                 self.mp_draw.draw_landmarks(frame, hand_landmarks, self.mp_hands.HAND_CONNECTIONS)
         return frame
 
-        def detect_symbol(self, landmarks):
+    def detect_symbol(self, landmarks):
         FINGER_TIPS = [4, 8, 12, 16, 20]
     
         if landmarks.multi_hand_landmarks and landmarks.multi_handedness:
@@ -85,3 +85,26 @@ class Detector:
                     if fingers == [0, 1, 0, 0, 1]: return 'X'
     
         return -1
+
+    def detect_thumb(self, landmarks):
+        FINGER_TIP = 4
+        THUMB_IP = 3
+    
+        thumbs_up = {"Left": False, "Right": False}
+    
+        if landmarks.multi_hand_landmarks and landmarks.multi_handedness:
+            for idx, hand_info in enumerate(landmarks.multi_handedness):
+                label = hand_info.classification[0].label
+                hand_landmarks = landmarks.multi_hand_landmarks[idx]
+    
+                tip = hand_landmarks.landmark[FINGER_TIP]
+                ip = hand_landmarks.landmark[THUMB_IP]
+    
+                if label == "Right":
+                    thumbs_up["Right"] = tip.x > ip.x
+                elif label == "Left":
+                    thumbs_up["Left"] = tip.x < ip.x
+    
+        return thumbs_up["Right"] and thumbs_up["Left"]
+
+
