@@ -1,7 +1,9 @@
 import cv2
 import time
 from Detector import Detector
-from Calculation import Calculation
+from Arithmetic import Arithmetic
+from Matrix import Matrix
+from Complex import Complex
 from Interface import Interface
 
 class Main:
@@ -10,7 +12,9 @@ class Main:
     def run():
         # Initialize components
         detector = Detector()
-        calculation = Calculation()
+        arithmetic = Arithmetic()
+        matrix = Matrix()
+        complex = Complex()
         interface = Interface()
         cap = cv2.VideoCapture(0)
 
@@ -47,7 +51,7 @@ class Main:
                 cv2.putText(frame, text, (x_pos, y_pos), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
                 # Activation Detection via two thumbs
                 is_activated = detector.detect_thumb(landmarks)
-            else:
+            elif is_activated:
                 # Calculate and show FPS
                 current_time = time.time()
                 fps = 1 / (current_time - prev_frame_time)
@@ -61,7 +65,23 @@ class Main:
                 cv2.putText(frame, text, (x_pos, y_pos), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2, cv2.LINE_AA)
 
                 if mode is None:
-                   interface.show_main_menu(frame)
+                    interface.show_main_menu(frame)
+                    # Main menu selection
+                    symbol = detector.detect_symbol(landmarks)
+                    print(f"Detected Symbol: {symbol}")
+                    if isinstance(symbol, int) and 1 <= symbol <= 4 and mode is None:
+                        time_since_last = current_time - last_detected_time
+                        if time_since_last >= debounce_interval:
+                            if symbol == 1:
+                                mode = "Arithmetic"
+                            elif symbol == 2:
+                                mode = "Matrix"
+                            elif symbol == 3:
+                                mode = "Complex"
+                            elif symbol == 4:
+                                is_activated = False
+                                mode = None
+                            last_detected_time = current_time
                 else:
                     text = f"Mode: {mode}"
                     (text_width, text_height), _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 1, 2)
@@ -69,22 +89,12 @@ class Main:
                     y_pos = 100
                     cv2.putText(frame, text, (x_pos, y_pos), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2, cv2.LINE_AA)
 
-                # Main menu selection
-                symbol = detector.detect_symbol(landmarks)
-                print(f"Detected Symbol: {symbol}")
-                if isinstance(symbol, int) and 1 <= symbol <= 4 and mode is None:
-                    time_since_last = current_time - last_detected_time
-                    last_detected_time = current_time
-                    if time_since_last >= debounce_interval:
-                        if symbol == 1:
-                            mode = "Arithmetic"
-                        elif symbol == 2:
-                            mode = "Matrix"
-                        elif symbol == 3:
-                            mode = "Complex"
-                        elif symbol == 4:
-                            is_activated = False
-                            mode = None
+            if mode == "Arithmetic":
+                arithmetic.proceed(frame, landmarks)
+            elif mode == "Matrix":
+                matrix.proceed(frame, landmarks)
+            elif mode == "Complex":
+                complex.proceed(frame, landmarks)
 
             cv2.imshow('HandyMath', frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
