@@ -114,6 +114,7 @@ class Matrix:
                 cv2.putText(frame, text, (x_pos, y_pos), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2, cv2.LINE_AA)
                             
             if self.current_matrix is not None and self.current_row != 0 and self.current_col != 0:
+                self.matrices[self.current_matrix] = np.zeros((self.current_row, self.current_col))
                 text = f"Matrix M{self.current_matrix} Created with Dimension: {self.current_row}*{self.current_col}"
                 (text_width, text_height), _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 1, 2)
                 x_pos = 50
@@ -124,8 +125,48 @@ class Matrix:
         elif self.mode == "Input":
             print("Input mode selected")
         elif self.mode == "Select":
-            print("Select mode selected")
+            if self.current_matrix is None:
+                text = f"Enter Matrix ID(1-9):"
+                (text_width, text_height), _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 1, 2)
+                x_pos = 50
+                y_pos = 150
+                cv2.putText(frame, text, (x_pos, y_pos), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2, cv2.LINE_AA)
+                
+                if isinstance(symbol, int) and 1 <= symbol <= 9:
+                    time_since_last = current_time - self.last_detected_time
+                    if time_since_last >= self.debounce_interval:
+                        self.current_matrix = symbol
+
+            if self.current_matrix is not None:
+                matrix_str = self.get_matrix_string(self.current_matrix)
+                lines = matrix_str.split('\n')
+                y_offset = 150
+                for i, line in enumerate(lines[:5]):  # Limit to 5 lines
+                    cv2.putText(frame, line, (50, y_offset + i * 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 0), 2)
+                
+                text = f"0. Back"
+                (text_width, text_height), _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 1, 2)
+                x_pos = 50
+                y_pos = y_offset+30
+                cv2.putText(frame, text, (x_pos, y_pos), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2, cv2.LINE_AA)
+
+                if isinstance(symbol, int) and 0 <= symbol <= 0:
+                    time_since_last = current_time - self.last_detected_time
+                    if time_since_last >= self.debounce_interval:
+                        if symbol == 0:
+                            self.current_matrix = None
+                            self.mode = None
+
         elif self.mode == "Operation":
             print("Operation mode selected")
         
         return
+
+    def get_matrix_string(self, matrix_id):
+        if matrix_id in self.matrices:
+            m = self.matrices[matrix_id]
+            result = f"Matrix {matrix_id} ({m.shape[0]}x{m.shape[1]}):\n"
+            for row in m:
+                result += " ".join([f"{val:.1f}" for val in row]) + "\n"
+            return result
+        return f"Matrix {matrix_id} not found"
