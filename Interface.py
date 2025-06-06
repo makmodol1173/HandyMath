@@ -21,3 +21,25 @@ class Interface:
         for i, option in enumerate(main_menu_options):
             y_pos = y_start + i * line_height
             cv2.putText(frame, option, (x_pos, y_pos), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2, cv2.LINE_AA)
+
+    @staticmethod
+    def show_matrix_menu(frame):
+        matrix_menu_options = [
+            "Select Your Choice:",
+            "1. Dimension",
+            "2. Input",
+            "3. Select",
+            "4. Operation",
+            "5. Exit"
+        ]
+        
+        # Determine the width of the longest line to right-align all menu options
+        text_sizes = [cv2.getTextSize(option, cv2.FONT_HERSHEY_SIMPLEX, 0.8, 2)[0] for option in matrix_menu_options]
+        max_width = max([w for (w, h) in text_sizes])
+        x_pos = 50
+        y_start = 100  # Starting Y position
+        line_height = 40  # Space between lines
+
+        for i, option in enumerate(matrix_menu_options):
+            y_pos = y_start + i * line_height
+            cv2.putText(frame, option, (x_pos, y_pos), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2, cv2.LINE_AA)

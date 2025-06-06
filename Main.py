@@ -28,6 +28,7 @@ class Main:
         mode = None
         last_detected_time = 0
         debounce_interval = 3
+        mode_switch_time = 0
 
         while cap.isOpened():
             success, frame = cap.read()
@@ -42,6 +43,8 @@ class Main:
             landmarks = detector.detect_hands(frame)
             frame = detector.draw_landmarks(frame, landmarks)
 
+            current_time = time.time()
+
             if not is_activated:
                 # Show Welcome Message
                 text = "Welcome to HandyMath"
@@ -53,7 +56,6 @@ class Main:
                 is_activated = detector.detect_thumb(landmarks)
             elif is_activated:
                 # Calculate and show FPS
-                current_time = time.time()
                 fps = 1 / (current_time - prev_frame_time)
                 prev_frame_time = current_time
     
@@ -74,10 +76,13 @@ class Main:
                         if time_since_last >= debounce_interval:
                             if symbol == 1:
                                 mode = "Arithmetic"
+                                mode_switch_time = current_time
                             elif symbol == 2:
                                 mode = "Matrix"
+                                mode_switch_time = current_time
                             elif symbol == 3:
                                 mode = "Complex"
+                                mode_switch_time = current_time
                             elif symbol == 4:
                                 is_activated = False
                                 mode = None
@@ -89,11 +94,13 @@ class Main:
                     y_pos = 100
                     cv2.putText(frame, text, (x_pos, y_pos), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2, cv2.LINE_AA)
 
-            if mode == "Arithmetic":
+            cooldown_period = 1
+
+            if mode == "Arithmetic" and (current_time - mode_switch_time > cooldown_period):
                 arithmetic.proceed(frame, landmarks)
-            elif mode == "Matrix":
+            elif mode == "Matrix" and (current_time - mode_switch_time > cooldown_period):
                 matrix.proceed(frame, landmarks)
-            elif mode == "Complex":
+            elif mode == "Complex" and (current_time - mode_switch_time > cooldown_period):
                 complex.proceed(frame, landmarks)
 
             cv2.imshow('HandyMath', frame)
