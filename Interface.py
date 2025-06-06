@@ -8,7 +8,7 @@ class Interface:
             "1. Arithmetic",
             "2. Matrix",
             "3. Complex",
-            "4. Exit"
+            "0. Exit"
         ]
 
         # Determine the width of the longest line to right-align all menu options
@@ -30,7 +30,7 @@ class Interface:
             "2. Input",
             "3. Select",
             "4. Operation",
-            "5. Exit"
+            "0. Exit"
         ]
         
         # Determine the width of the longest line to right-align all menu options
