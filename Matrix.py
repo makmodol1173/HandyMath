@@ -44,6 +44,7 @@ class Matrix:
                         self.mode = None
                         config.mode = None
                     config.last_detected_time = current_time
+
         elif self.mode is not None:
             # Show current mode label
             text = f"Matrix Mode: {self.mode}"
@@ -55,11 +56,60 @@ class Matrix:
         if self.mode == "Dimension":
             self.handle_dimension_mode(frame, symbol)
         elif self.mode == "Input":
-            print("Input mode selected")
+            self.handle_input_mode(frame, symbol)
         elif self.mode == "Select":
             self.handle_selection_mode(frame, symbol)
         elif self.mode == "Operation":
             print("Operation mode selected")
+
+    def handle_input_mode(self, frame, symbol):
+        current_time = time.time()
+        # Handle matrix selection
+        if self.current_matrix is None:
+            text = "Select Matrix ID(1-9):"
+            cv2.putText(frame, text, (50, 150), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+            if isinstance(symbol, int) and 1 <= symbol <= 9:
+                if current_time - config.last_detected_time >= config.debounce_interval:
+                    self.current_matrix = symbol
+                    config.last_detected_time = current_time
+        
+        # Displaying selected matrix id
+        if self.current_matrix is not None:
+            cv2.putText(frame, f"Selected Matrix: M{self.current_matrix}", (50, 150), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+
+        # Show matrix content if selected
+        y_offset = 200
+        if self.current_matrix is not None and self.current_matrix in self.matrices:
+            matrix_str = self.get_matrix_string(self.current_matrix)
+            lines = matrix_str.split('\n')
+            for i, line in enumerate(lines[:5]):
+                cv2.putText(frame, line, (50, y_offset), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 0), 2)
+                y_offset += 30        
+
+        # Getting input
+        if self.current_matrix is not None and self.current_matrix in self.matrices:
+            if isinstance(symbol, int) and 0 <= symbol <= 9:
+                if current_time - config.last_detected_time >= config.debounce_interval:
+                    matrix = self.matrices[self.current_matrix]
+                    if self.current_row < matrix.shape[0] and self.current_col < matrix.shape[1]:
+                        matrix[self.current_row, self.current_col] = symbol
+                        
+                        # Move to next position
+                        self.current_col += 1
+                        if self.current_col >= matrix.shape[1]:
+                            self.current_col = 0
+                            self.current_row += 1
+                        config.last_detected_time = current_time
+        
+        # Back menu
+        text = "0. Exit"
+        y_pos = 200 if self.current_matrix is None else y_offset + 70 
+        cv2.putText(frame, text, (50, y_pos), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+        if isinstance(symbol, int) and symbol == 0:
+            if current_time - config.last_detected_time >= config.debounce_interval:
+                self.mode = None
+                self.current_matrix = None
+                config.last_detected_time = current_time
 
     def handle_selection_mode(self, frame, symbol):
         current_time = time.time()
@@ -77,10 +127,10 @@ class Matrix:
             cv2.putText(frame, f"Selected Matrix: M{self.current_matrix}", (50, 150), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
 
         # Show matrix content if selected
+        y_offset = 200
         if self.current_matrix is not None and self.current_matrix in self.matrices:
             matrix_str = self.get_matrix_string(self.current_matrix)
             lines = matrix_str.split('\n')
-            y_offset = 200
             for i, line in enumerate(lines[:5]):
                 cv2.putText(frame, line, (50, y_offset), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 0), 2)
                 y_offset += 30
