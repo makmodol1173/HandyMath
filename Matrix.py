@@ -35,7 +35,7 @@ class Matrix:
         if self.mode is None:
             self.interface.show_matrix_menu(frame)
 
-            if isinstance(symbol, int) and 1 <= symbol <= 5:
+            if isinstance(symbol, int) and 0 <= symbol <= 5:
                 time_since_last = current_time - self.last_detected_time
                 if time_since_last >= self.debounce_interval:
                     if symbol == 1:
@@ -50,7 +50,7 @@ class Matrix:
                     elif symbol == 4:
                         self.mode = "Operation"
                         self.matrix_mode_entered_time = current_time
-                    elif symbol == 5:
+                    elif symbol == 0:
                         config.mode = None
                         self.mode = None
                     self.last_detected_time = current_time
@@ -87,7 +87,7 @@ class Matrix:
                         self.current_row = symbol
                         self.last_detected_time = current_time
 
-            if self.current_row != 0:
+            if self.current_row != 0 and current_time - self.last_detected_time >= self.cooldown_period:
                 cv2.putText(frame, f"Selected Row: {self.current_row}", (50, 200), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
 
             if self.current_row != 0 and self.current_col == 0:
@@ -97,16 +97,17 @@ class Matrix:
                         self.current_col = symbol
                         self.last_detected_time = current_time
 
-            if self.current_col != 0:
+            if self.current_col != 0 and current_time - self.last_detected_time >= self.cooldown_period:
                 cv2.putText(frame, f"Selected Col: {self.current_col}", (50, 250), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
 
             if self.current_matrix and self.current_row and self.current_col:
                 self.matrices[self.current_matrix] = np.zeros((self.current_row, self.current_col))
                 cv2.putText(frame, f"Matrix M{self.current_matrix} Created: {self.current_row}x{self.current_col}", (50, 350), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
-                self.mode = None
-                self.current_matrix = None
-                self.current_row = 0
-                self.current_col = 0
+                if current_time - self.last_detected_time >= self.cooldown_period:
+                    self.mode = None
+                    self.current_matrix = None
+                    self.current_row = 0
+                    self.current_col = 0
 
         elif self.mode == "Input":
             print("Input mode selected")

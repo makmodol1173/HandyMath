@@ -5,6 +5,7 @@ from Arithmetic import Arithmetic
 from Matrix import Matrix
 from Complex import Complex
 from Interface import Interface
+import config
 
 class Main:
 
@@ -24,8 +25,8 @@ class Main:
 
         # Initial State
         prev_frame_time = time.time()
-        is_activated = False
-        mode = None
+        # is_activated = False
+        # mode = None
         last_detected_time = 0
         debounce_interval = 3
         mode_switch_time = 0
@@ -47,7 +48,7 @@ class Main:
 
             current_time = time.time()
 
-            if not is_activated:
+            if not config.is_activated:
                 # Show Welcome Message
                 text = "Welcome to HandyMath"
                 (text_width, text_height), _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 1, 2)
@@ -57,9 +58,9 @@ class Main:
 
                 # Activation Detection via two thumbs
                 if detector.detect_thumb(landmarks):
-                    is_activated = True
+                    config.is_activated = True
                     activation_time = current_time  # Set activation time
-            elif is_activated:
+            elif config.is_activated:
                 # Calculate and show FPS
                 fps = 1 / (current_time - prev_frame_time)
                 prev_frame_time = current_time
@@ -72,7 +73,7 @@ class Main:
                     y_pos = 50
                     cv2.putText(frame, text, (x_pos, y_pos), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2, cv2.LINE_AA)
 
-                if mode is None:
+                if config.mode is None:
                     # Wait for cooldown after activation before showing menu
                     if current_time - activation_time > cooldown_period:
                         interface.show_main_menu(frame)
@@ -83,31 +84,31 @@ class Main:
                             time_since_last = current_time - last_detected_time
                             if time_since_last >= debounce_interval:
                                 if symbol == 1:
-                                    mode = "Arithmetic"
+                                    config.mode = "Arithmetic"
                                     mode_switch_time = current_time
                                 elif symbol == 2:
-                                    mode = "Matrix"
+                                    config.mode = "Matrix"
                                     mode_switch_time = current_time
                                 elif symbol == 3:
-                                    mode = "Complex"
+                                    config.mode = "Complex"
                                     mode_switch_time = current_time
                                 elif symbol == 0:
-                                    is_activated = False
-                                    mode = None
+                                    config.is_activated = False
+                                    config.mode = None
                                 last_detected_time = current_time
                 else:
-                    text = f"Mode: {mode}"
+                    text = f"Mode: {config.mode}"
                     (text_width, text_height), _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 1, 2)
                     x_pos = frame.shape[1] - text_width - 30
                     y_pos = 100
                     cv2.putText(frame, text, (x_pos, y_pos), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2, cv2.LINE_AA)
 
             # Proceed with selected mode after cooldown
-            if mode == "Arithmetic" and (current_time - mode_switch_time > cooldown_period):
+            if config.mode == "Arithmetic" and (current_time - mode_switch_time > cooldown_period):
                 arithmetic.proceed(frame, landmarks)
-            elif mode == "Matrix" and (current_time - mode_switch_time > cooldown_period):
+            elif config.mode == "Matrix" and (current_time - mode_switch_time > cooldown_period):
                 matrix.proceed(frame, landmarks)
-            elif mode == "Complex" and (current_time - mode_switch_time > cooldown_period):
+            elif config.mode == "Complex" and (current_time - mode_switch_time > cooldown_period):
                 complex.proceed(frame, landmarks)
 
             cv2.imshow('HandyMath', frame)
