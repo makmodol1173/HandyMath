@@ -63,6 +63,7 @@ class Matrix:
             self.handle_selection_mode(frame, symbol)
         elif self.mode == "Operation":
             self.handle_operation_mode(frame, symbol)
+
     def handle_determinant_mode(self, frame, symbol):
         current_time = time.time()
         if self.operand_matrices is None or len(self.operand_matrices) == 0:
@@ -88,7 +89,60 @@ class Matrix:
                     self.current_matrix = None
                     self.operand_matrices.clear()
                     config.last_detected_time = current_time
-                    
+
+    def handle_addition(self, frame, symbol):
+        current_time = time.time()
+        if self.operand_matrices is None or len(self.operand_matrices) == 0:
+            text = "Select Matrix ID(1-9):"
+            cv2.putText(frame, text, (50, 200), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+            if isinstance(symbol, int) and 1 <= symbol <= 9:
+                if current_time - config.last_detected_time >= config.debounce_interval:
+                    self.current_matrix = symbol
+                    self.operand_matrices.append(self.current_matrix)
+                    self.current_matrix = None
+                    config.last_detected_time = current_time
+
+        elif self.operand_matrices is not None and len(self.operand_matrices) == 1:
+            cv2.putText(frame, f"Selected Matrices: M{self.operand_matrices[0]}", (50, 200), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+            text = "Select another Matrix ID(1-9):"
+            cv2.putText(frame, text, (50, 250), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+            if isinstance(symbol, int) and 1 <= symbol <= 9:
+                if current_time - config.last_detected_time >= config.debounce_interval:
+                    self.current_matrix = symbol
+                    self.operand_matrices.append(self.current_matrix)
+                    self.current_matrix = None
+                    config.last_detected_time = current_time
+        elif self.operand_matrices is not None and len(self.operand_matrices) == 2:
+            cv2.putText(frame, f"Selected Matrices: M{self.operand_matrices[1]}", (50, 250), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+
+            m1 = self.matrices[self.operand_matrices[0]]
+            m2 = self.matrices[self.operand_matrices[1]]
+            if m1.shape == m2.shape:
+                result = m1 + m2
+                self.matrices["R"] = result
+            else:
+                print("Matrices must have the same dimensions for addition.")
+            self.operand_matrices.clear()
+        
+        if "R" in self.matrices:
+            cv2.putText(frame, "Result of Addition:", (50, 300), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+            y_offset = 350
+            matrix_str = self.get_matrix_string("R")
+            lines = matrix_str.split('\n')
+            for i, line in enumerate(lines[:5]):
+                cv2.putText(frame, line, (50, y_offset), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 0), 2)
+                y_offset += 30        
+            
+            # Back menu
+            text = "0. Exit"
+            y_pos = 350 if self.current_matrix is None else y_offset + 70 
+            cv2.putText(frame, text, (50, y_pos), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+            if isinstance(symbol, int) and symbol == 0:
+                if current_time - config.last_detected_time >= config.debounce_interval:
+                    self.operation_mode = None
+                    self.current_matrix = None
+                    config.last_detected_time = current_time
+
     def handle_operation_mode(self, frame, symbol):
         if self.operation_mode is None:
             self.interface.show_matrix_operation_menu(frame)
