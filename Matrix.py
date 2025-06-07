@@ -8,12 +8,14 @@ import config
 class Matrix:
     def __init__(self):
         self.mode = None
+        self.operation_mode = None
         self.detector = Detector()
         self.interface = Interface()
         self.matrices = {}
         self.current_matrix = None
         self.current_row = 0
         self.current_col = 0
+        self.operand_matrices = []
 
     def proceed(self, frame, landmarks):
         current_time = time.time()
@@ -60,7 +62,77 @@ class Matrix:
         elif self.mode == "Select":
             self.handle_selection_mode(frame, symbol)
         elif self.mode == "Operation":
-            print("Operation mode selected")
+            self.handle_operation_mode(frame, symbol)
+    def handle_determinant_mode(self, frame, symbol):
+        current_time = time.time()
+        if self.operand_matrices is None or len(self.operand_matrices) == 0:
+            text = "Select Matrix ID(1-9):"
+            cv2.putText(frame, text, (50, 200), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+            if isinstance(symbol, int) and 1 <= symbol <= 9:
+                if current_time - config.last_detected_time >= config.debounce_interval:
+                    self.current_matrix = symbol
+                    self.operand_matrices.append(self.current_matrix)
+                    self.current_matrix = None
+                    config.last_detected_time = current_time
+
+        elif self.operand_matrices is not None and len(self.operand_matrices) == 1:
+            cv2.putText(frame, f"Selected Matrices: M{self.operand_matrices[0]}", (50, 200), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+            text = f"Result of Deteminant: {np.linalg.det(self.matrices[self.operand_matrices[0]]):.2f}"
+            cv2.putText(frame, text, (50, 250), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+            # Back menu
+            text = "0. Exit"
+            cv2.putText(frame, text, (50, 300), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+            if isinstance(symbol, int) and symbol == 0:
+                if current_time - config.last_detected_time >= config.debounce_interval:
+                    self.operation_mode = None
+                    self.current_matrix = None
+                    self.operand_matrices.clear()
+                    config.last_detected_time = current_time
+                    
+    def handle_operation_mode(self, frame, symbol):
+        if self.operation_mode is None:
+            self.interface.show_matrix_operation_menu(frame)
+            if isinstance(symbol, int) and 0 <= symbol <= 6:
+                if time.time() - config.last_detected_time >= config.debounce_interval:
+                    if symbol == 1:
+                        self.operation_mode = "Addition"
+                    elif symbol == 2:
+                        self.operation_mode = "Subtraction"
+                    elif symbol == 3:
+                        self.operation_mode = "Multiplication"
+                    elif symbol == 4:
+                        self.operation_mode = "Transpose"
+                    elif symbol == 5:
+                        self.operation_mode = "Determinant"
+                    elif symbol == 6:
+                        self.operation_mode = "Inverse"
+                    elif symbol == 0:
+                        self.operation_mode = None
+                        self.mode = None
+                    config.last_detected_time = time.time()
+        
+        elif self.operation_mode is not None:
+            # Show current operation mode label
+            text = f"Matrix Operation Mode: {self.operation_mode}"
+            (text_width, text_height), _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 1, 2)
+            x_pos = 50
+            y_pos = 150
+            cv2.putText(frame, text, (x_pos, y_pos), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2, cv2.LINE_AA)
+
+        if self.operation_mode == "Addition":
+            self.handle_addition(frame, symbol)
+            # print("Addition Mode Selected")
+        elif self.operation_mode == "Subtraction":
+            print("Subtraction Mode Selected")
+        elif self.operation_mode == "Multiplication":
+            print("Multiplication Mode Selected")
+        elif self.operation_mode == "Transpose":
+            print("Transpose Mode Selected")
+        elif self.operation_mode == "Determinant":
+            self.handle_determinant_mode(frame, symbol)
+            # print("Determinant Mode Selected")
+        elif self.operation_mode == "Inverse":
+            print("Inverse Mode Selected")
 
     def handle_input_mode(self, frame, symbol):
         current_time = time.time()
