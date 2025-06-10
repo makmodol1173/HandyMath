@@ -74,6 +74,8 @@ class Matrix:
                     self.current_matrix = symbol
                     self.operand_matrices.append(self.current_matrix)
                     self.current_matrix = None
+                    self.current_row = 0
+                    self.current_col = 0
                     config.last_detected_time = current_time
 
         elif self.operand_matrices is not None and len(self.operand_matrices) == 1:
@@ -87,6 +89,8 @@ class Matrix:
                 if current_time - config.last_detected_time >= config.debounce_interval:
                     self.operation_mode = None
                     self.current_matrix = None
+                    self.current_row = 0
+                    self.current_col = 0
                     self.operand_matrices.clear()
                     config.last_detected_time = current_time
 
@@ -100,6 +104,8 @@ class Matrix:
                     self.current_matrix = symbol
                     self.operand_matrices.append(self.current_matrix)
                     self.current_matrix = None
+                    self.current_row = 0
+                    self.current_col = 0
                     config.last_detected_time = current_time
 
         elif self.operand_matrices is not None and len(self.operand_matrices) == 1:
@@ -111,6 +117,8 @@ class Matrix:
                     self.current_matrix = symbol
                     self.operand_matrices.append(self.current_matrix)
                     self.current_matrix = None
+                    self.current_row = 0
+                    self.current_col = 0
                     config.last_detected_time = current_time
         elif self.operand_matrices is not None and len(self.operand_matrices) == 2:
             cv2.putText(frame, f"Selected Matrices: M{self.operand_matrices[1]}", (50, 250), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
@@ -141,6 +149,8 @@ class Matrix:
                 if current_time - config.last_detected_time >= config.debounce_interval:
                     self.operation_mode = None
                     self.current_matrix = None
+                    self.current_row = 0
+                    self.current_col = 0
                     config.last_detected_time = current_time
 
     def handle_operation_mode(self, frame, symbol):
@@ -229,12 +239,14 @@ class Matrix:
         
         # Back menu
         text = "0. Exit"
-        y_pos = 200 if self.current_matrix is None else y_offset + 70 
+        y_pos = 200 if self.current_matrix is None else y_offset 
         cv2.putText(frame, text, (50, y_pos), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
         if isinstance(symbol, int) and symbol == 0:
             if current_time - config.last_detected_time >= config.debounce_interval:
                 self.mode = None
                 self.current_matrix = None
+                self.current_row = 0
+                self.current_col = 0
                 config.last_detected_time = current_time
 
     def handle_selection_mode(self, frame, symbol):
@@ -263,12 +275,14 @@ class Matrix:
 
         # Back menu
         text = "0. Exit"
-        y_pos = 200 if self.current_matrix is None else y_offset + 20 
+        y_pos = 200 if self.current_matrix is None else y_offset
         cv2.putText(frame, text, (50, y_pos), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
         if isinstance(symbol, int) and symbol == 0:
             if current_time - config.last_detected_time >= config.debounce_interval:
                 self.mode = None
                 self.current_matrix = None
+                self.current_row = 0
+                self.current_col = 0 
                 config.last_detected_time = current_time
 
     def handle_dimension_mode(self, frame, symbol):
