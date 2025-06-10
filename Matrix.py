@@ -94,6 +94,51 @@ class Matrix:
                     self.operand_matrices.clear()
                     config.last_detected_time = current_time
 
+    def handle_unary_operation(self, frame, symbol, operator):
+        current_time = time.time()
+        if self.operand_matrices is None or len(self.operand_matrices) == 0:
+            text = "Select Matrix ID(1-9):"
+            cv2.putText(frame, text, (50, 200), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+            if isinstance(symbol, int) and 1 <= symbol <= 9:
+                if current_time - config.last_detected_time >= config.debounce_interval:
+                    self.current_matrix = symbol
+                    self.operand_matrices.append(self.current_matrix)
+                    self.current_matrix = None
+                    self.current_row = 0
+                    self.current_col = 0
+                    config.last_detected_time = current_time
+
+        elif self.operand_matrices is not None and len(self.operand_matrices) == 1:
+            cv2.putText(frame, f"Selected Matrices: M{self.operand_matrices[0]}", (50, 200), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+            if operator == "INV":
+                self.matrices["R"] = np.linalg.inv(self.matrices[self.operand_matrices[0]])
+            elif operator == "TRN":
+                self.matrices["R"] = self.matrices[self.operand_matrices[0]].T
+        
+        if "R" in self.matrices:
+            cv2.putText(frame, f"Result of {"Inverse" if operator == "INV" else "Transponse"} :", (50, 250), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+            y_offset = 300
+            matrix_str = self.get_matrix_string("R")
+            lines = matrix_str.split('\n')
+            for i, line in enumerate(lines[:5]):
+                cv2.putText(frame, line, (50, y_offset), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 0), 2)
+                y_offset += 30        
+            
+            # Back menu
+            text = "0. Exit"
+            y_pos = 300 if "R" not in self.matrices else y_offset
+            cv2.putText(frame, text, (50, y_pos), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+            if isinstance(symbol, int) and symbol == 0:
+                if current_time - config.last_detected_time >= config.debounce_interval:
+                    self.operation_mode = None
+                    self.current_matrix = None
+                    self.current_row = 0
+                    self.current_col = 0
+                    if "R" in self.matrices:
+                        del self.matrices["R"]
+                    self.operand_matrices.clear()
+                    config.last_detected_time = current_time
+            
     def handle_binary_operation(self, frame, symbol, operator):
         current_time = time.time()
         if self.operand_matrices is None or len(self.operand_matrices) == 0:
@@ -201,11 +246,11 @@ class Matrix:
         elif self.operation_mode == "Multiplication":
             self.handle_binary_operation(frame, symbol, "*")
         elif self.operation_mode == "Transpose":
-            print("Transpose Mode Selected")
+            self.handle_unary_operation(frame, symbol, "TRN")
         elif self.operation_mode == "Determinant":
             self.handle_determinant_mode(frame, symbol)
         elif self.operation_mode == "Inverse":
-            print("Inverse Mode Selected")
+            self.handle_unary_operation(frame, symbol, "INV")
 
     def handle_input_mode(self, frame, symbol):
         current_time = time.time()
