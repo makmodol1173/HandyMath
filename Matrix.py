@@ -94,7 +94,7 @@ class Matrix:
                     self.operand_matrices.clear()
                     config.last_detected_time = current_time
 
-    def handle_addition(self, frame, symbol):
+    def handle_binary_operation(self, frame, symbol, operator):
         current_time = time.time()
         if self.operand_matrices is None or len(self.operand_matrices) == 0:
             text = "Select Matrix ID(1-9):"
@@ -124,7 +124,12 @@ class Matrix:
             m1 = self.matrices[self.operand_matrices[0]]
             m2 = self.matrices[self.operand_matrices[1]]
             if m1.shape == m2.shape:
-                result = m1 + m2
+                if operator == "+":
+                   result = m1 + m2
+                elif operator == "-":
+                   result = m1 - m2
+                elif operator == "*":
+                   result = np.matmul(m1, m2)
                 self.matrices["R"] = result
             else:
                 print("Matrices must have the same dimensions for addition.")
@@ -190,11 +195,11 @@ class Matrix:
             cv2.putText(frame, text, (x_pos, y_pos), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2, cv2.LINE_AA)
 
         if self.operation_mode == "Addition":
-            self.handle_addition(frame, symbol)
+            self.handle_binary_operation(frame, symbol, "+")
         elif self.operation_mode == "Subtraction":
-            print("Subtraction Mode Selected")
+            self.handle_binary_operation(frame, symbol, "-")
         elif self.operation_mode == "Multiplication":
-            print("Multiplication Mode Selected")
+            self.handle_binary_operation(frame, symbol, "*")
         elif self.operation_mode == "Transpose":
             print("Transpose Mode Selected")
         elif self.operation_mode == "Determinant":
