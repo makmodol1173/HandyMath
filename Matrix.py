@@ -109,7 +109,6 @@ class Matrix:
                     config.last_detected_time = current_time
 
         elif self.operand_matrices is not None and len(self.operand_matrices) == 1:
-            cv2.putText(frame, f"Selected Matrices: M{self.operand_matrices[0]}", (50, 200), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
             text = "Select another Matrix ID(1-9):"
             cv2.putText(frame, text, (50, 250), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
             if isinstance(symbol, int) and 1 <= symbol <= 9:
@@ -120,9 +119,8 @@ class Matrix:
                     self.current_row = 0
                     self.current_col = 0
                     config.last_detected_time = current_time
+        
         elif self.operand_matrices is not None and len(self.operand_matrices) == 2:
-            cv2.putText(frame, f"Selected Matrices: M{self.operand_matrices[1]}", (50, 250), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
-
             m1 = self.matrices[self.operand_matrices[0]]
             m2 = self.matrices[self.operand_matrices[1]]
             if m1.shape == m2.shape:
@@ -130,7 +128,12 @@ class Matrix:
                 self.matrices["R"] = result
             else:
                 print("Matrices must have the same dimensions for addition.")
-            self.operand_matrices.clear()
+        
+        if len(self.operand_matrices) >= 1:
+            cv2.putText(frame, f"Selected Matrices: M{self.operand_matrices[0]}", (50, 200), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+        
+        if len(self.operand_matrices) >= 2:
+            cv2.putText(frame, f"Selected Matrices: M{self.operand_matrices[1]}", (50, 250), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
         
         if "R" in self.matrices:
             cv2.putText(frame, "Result of Addition:", (50, 300), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
@@ -143,7 +146,7 @@ class Matrix:
             
             # Back menu
             text = "0. Exit"
-            y_pos = 350 if self.current_matrix is None else y_offset + 70 
+            y_pos = 350 if "R" not in self.matrices else y_offset
             cv2.putText(frame, text, (50, y_pos), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
             if isinstance(symbol, int) and symbol == 0:
                 if current_time - config.last_detected_time >= config.debounce_interval:
@@ -151,6 +154,9 @@ class Matrix:
                     self.current_matrix = None
                     self.current_row = 0
                     self.current_col = 0
+                    if "R" in self.matrices:
+                        del self.matrices["R"]
+                    self.operand_matrices.clear()
                     config.last_detected_time = current_time
 
     def handle_operation_mode(self, frame, symbol):
@@ -185,7 +191,6 @@ class Matrix:
 
         if self.operation_mode == "Addition":
             self.handle_addition(frame, symbol)
-            # print("Addition Mode Selected")
         elif self.operation_mode == "Subtraction":
             print("Subtraction Mode Selected")
         elif self.operation_mode == "Multiplication":
@@ -194,7 +199,6 @@ class Matrix:
             print("Transpose Mode Selected")
         elif self.operation_mode == "Determinant":
             self.handle_determinant_mode(frame, symbol)
-            # print("Determinant Mode Selected")
         elif self.operation_mode == "Inverse":
             print("Inverse Mode Selected")
 
