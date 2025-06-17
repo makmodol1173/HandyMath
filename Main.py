@@ -5,10 +5,10 @@ from Arithmetic import Arithmetic
 from Matrix import Matrix
 from Complex import Complex
 from Interface import Interface
+import config
 
 class Main:
 
-    @staticmethod
     def run():
         # Initialize components
         detector = Detector()
@@ -24,12 +24,9 @@ class Main:
 
         # Initial State
         prev_frame_time = time.time()
-        is_activated = False
-        mode = None
-        last_detected_time = 0
-        debounce_interval = 3
 
         while cap.isOpened():
+            # Capture frame
             success, frame = cap.read()
             if not success:
                 print('Ignoring empty camera frame.')
@@ -42,65 +39,73 @@ class Main:
             landmarks = detector.detect_hands(frame)
             frame = detector.draw_landmarks(frame, landmarks)
 
-            if not is_activated:
-                # Show Welcome Message
+            current_time = time.time()
+
+            # Show Welcome Message
+            if not config.is_activated:
                 text = "Welcome to HandyMath"
                 (text_width, text_height), _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 1, 2)
                 x_pos = (frame.shape[1] - text_width) // 2
                 y_pos = 50
                 cv2.putText(frame, text, (x_pos, y_pos), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
+
                 # Activation Detection via two thumbs
                 if detector.detect_thumb(landmarks):
-                    is_activated = True
-            elif is_activated:
+                    config.is_activated = True
+                    config.last_detected_time = current_time
+
+            elif config.is_activated:
                 # Calculate and show FPS
-                current_time = time.time()
                 fps = 1 / (current_time - prev_frame_time)
                 prev_frame_time = current_time
-    
-                fps_int = int(fps)
-                text = f'FPS: {fps_int:02}'
-                (text_width, text_height), _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 1, 2)
-                x_pos = frame.shape[1] - text_width - 170
-                y_pos = 50
-                cv2.putText(frame, text, (x_pos, y_pos), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2, cv2.LINE_AA)
 
-                if mode is None:
+                if current_time - config.last_detected_time >= config.cooldown_period:
+                    fps_int = int(fps)
+                    text = f'FPS: {fps_int:02}'
+                    (text_width, text_height), _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 1, 2)
+                    x_pos = frame.shape[1] - text_width - 170
+                    y_pos = 50
+                    cv2.putText(frame, text, (x_pos, y_pos), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2, cv2.LINE_AA)
+
+            if config.mode is None and config.is_activated:
+                # Wait for cooldown after activation before showing menu
+                if current_time - config.last_detected_time >= config.cooldown_period:
                     interface.show_main_menu(frame)
                     # Main menu selection
                     symbol = detector.detect_symbol(landmarks)
                     print(f"Detected Symbol: {symbol}")
-                    if isinstance(symbol, int) and 1 <= symbol <= 4 and mode is None:
-                        time_since_last = current_time - last_detected_time
-                        if time_since_last >= debounce_interval:
+                    if isinstance(symbol, int) and 0 <= symbol <= 3:
+                        if current_time - config.last_detected_time >= config.debounce_interval:
                             if symbol == 1:
-                                mode = "Arithmetic"
+                                config.mode = "Arithmetic"
                             elif symbol == 2:
-                                mode = "Matrix"
+                                config.mode = "Matrix"
                             elif symbol == 3:
-                                mode = "Complex"
-                            elif symbol == 4:
-                                is_activated = False
-                                mode = None
-                            last_detected_time = current_time
-                else:
-                    text = f"Mode: {mode}"
-                    (text_width, text_height), _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 1, 2)
-                    x_pos = frame.shape[1] - text_width - 30
-                    y_pos = 100
-                    cv2.putText(frame, text, (x_pos, y_pos), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2, cv2.LINE_AA)
+                                config.mode = "Complex"
+                            elif symbol == 0:
+                                config.is_activated = False
+                                config.mode = None
+                            config.last_detected_time = current_time
 
-            if mode == "Arithmetic":
+            elif config.mode is not None and config.is_activated:
+                text = f"Mode: {config.mode}"
+                (text_width, text_height), _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 1, 2)
+                x_pos = frame.shape[1] - text_width - 30
+                y_pos = 100
+                cv2.putText(frame, text, (x_pos, y_pos), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2, cv2.LINE_AA)
+
+            # Proceed with selected mode after cooldown
+            if config.mode == "Arithmetic":
                 arithmetic.proceed(frame, landmarks)
-            elif mode == "Matrix":
+            elif config.mode == "Matrix":
                 matrix.proceed(frame, landmarks)
-            elif mode == "Complex":
+            elif config.mode == "Complex":
                 complex.proceed(frame, landmarks)
 
             cv2.imshow('HandyMath', frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
-        
+
         cap.release()
         cv2.destroyAllWindows()
 
