@@ -1,24 +1,33 @@
 import cv2
 import time
 from Detector import Detector
-from Calculation import Calculation
+from Arithmetic import Arithmetic
+from Matrix import Matrix
+from Complex import Complex
+from Interface import Interface
 
 class Main:
-    expression = ""
-    result = ""
-    last_detected_time = 0
-    debounce_interval = 1.0
 
     @staticmethod
     def run():
+        # Initialize components
         detector = Detector()
-        calculation = Calculation()
+        arithmetic = Arithmetic()
+        matrix = Matrix()
+        complex = Complex()
+        interface = Interface()
         cap = cv2.VideoCapture(0)
 
+        # Set webcam width and height
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 
+        # Initial State
         prev_frame_time = time.time()
+        is_activated = False
+        mode = None
+        last_detected_time = 0
+        debounce_interval = 3
 
         while cap.isOpened():
             success, frame = cap.read()
@@ -28,41 +37,66 @@ class Main:
 
             # Mirror image
             frame = cv2.flip(frame, 1) 
-            
-            # Calculate FPS
-            current_time = time.time()
-            fps = 1 / (current_time - prev_frame_time)
-            prev_frame_time = current_time
 
+            # Detect hands and draw landmarks
             landmarks = detector.detect_hands(frame)
             frame = detector.draw_landmarks(frame, landmarks)
 
-            symbol = detector.detect_symbol(landmarks)
+            if not is_activated:
+                # Show Welcome Message
+                text = "Welcome to HandyMath"
+                (text_width, text_height), _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 1, 2)
+                x_pos = (frame.shape[1] - text_width) // 2
+                y_pos = 50
+                cv2.putText(frame, text, (x_pos, y_pos), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
+                # Activation Detection via two thumbs
+                is_activated = detector.detect_thumb(landmarks)
+            elif is_activated:
+                # Calculate and show FPS
+                current_time = time.time()
+                fps = 1 / (current_time - prev_frame_time)
+                prev_frame_time = current_time
+    
+                fps_int = int(fps)
+                text = f'FPS: {fps_int:02}'
+                (text_width, text_height), _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 1, 2)
+                x_pos = frame.shape[1] - text_width - 170
+                y_pos = 50
+                cv2.putText(frame, text, (x_pos, y_pos), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2, cv2.LINE_AA)
 
-            if isinstance(symbol, int) and 0 <= symbol <= 9 or symbol in ['=', '+', '-', '*', '/', '^', '(', ')', '#', 'E', 'X']:
-                time_since_last = current_time - Main.last_detected_time
-                if time_since_last >= Main.debounce_interval:
-                    if(symbol != '=' and Main.result == ""):
-                        Main.expression += str(symbol)
-                    Main.last_detected_time = current_time
-                    if(symbol == '='):
-                        Main.result = calculation.calculate(Main.expression)
-                    elif symbol == 'E':
-                        Main.expression = ""
-                        Main.result = ""
+                if mode is None:
+                    interface.show_main_menu(frame)
+                    # Main menu selection
+                    symbol = detector.detect_symbol(landmarks)
+                    print(f"Detected Symbol: {symbol}")
+                    if isinstance(symbol, int) and 1 <= symbol <= 4 and mode is None:
+                        time_since_last = current_time - last_detected_time
+                        if time_since_last >= debounce_interval:
+                            if symbol == 1:
+                                mode = "Arithmetic"
+                            elif symbol == 2:
+                                mode = "Matrix"
+                            elif symbol == 3:
+                                mode = "Complex"
+                            elif symbol == 4:
+                                is_activated = False
+                                mode = None
+                            last_detected_time = current_time
+                else:
+                    text = f"Mode: {mode}"
+                    (text_width, text_height), _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 1, 2)
+                    x_pos = frame.shape[1] - text_width - 30
+                    y_pos = 100
+                    cv2.putText(frame, text, (x_pos, y_pos), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2, cv2.LINE_AA)
 
-            # Show FPS
-            cv2.putText(frame, f'FPS: {int(fps)}', (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+            if mode == "Arithmetic":
+                arithmetic.proceed(frame, landmarks)
+            elif mode == "Matrix":
+                matrix.proceed(frame, landmarks)
+            elif mode == "Complex":
+                complex.proceed(frame, landmarks)
 
-            # Show the expression
-            if Main.expression != "":
-                cv2.putText(frame, f'Expression: {Main.expression}', (50, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
-
-            # Show the result
-            if Main.result != "":
-                cv2.putText(frame, f'Result: {Main.result}', (50, 200), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-
-            cv2.imshow('Hand Detection', frame)
+            cv2.imshow('HandyMath', frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
         
