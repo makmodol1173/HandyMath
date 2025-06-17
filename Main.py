@@ -50,7 +50,8 @@ class Main:
                 y_pos = 50
                 cv2.putText(frame, text, (x_pos, y_pos), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
                 # Activation Detection via two thumbs
-                is_activated = detector.detect_thumb(landmarks)
+                if detector.detect_thumb(landmarks):
+                    is_activated = True
             elif is_activated:
                 # Calculate and show FPS
                 current_time = time.time()
