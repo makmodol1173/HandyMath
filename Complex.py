@@ -1,6 +1,6 @@
 import cv2
 import time
-from Detector import Detector
+from detector import Detector
 import config
 
 class Complex:

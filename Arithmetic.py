@@ -1,6 +1,7 @@
 import cv2
 import time
-from Detector import Detector
+import config
+from detector import Detector
 
 class Arithmetic:
 
@@ -9,8 +10,6 @@ class Arithmetic:
         self.operands = []
         self.expression = ""
         self.result = ""
-        self.last_detected_time = 0
-        self.debounce_interval = 3
         self.detector = Detector()
 
     def precedence(self, operator):
@@ -95,8 +94,8 @@ class Arithmetic:
         print(f"Detected Symbol: {symbol}")
 
         if isinstance(symbol, int) and 0 <= symbol <= 9 or symbol in ['=', '+', '-', '*', '/', '^', '(', ')', 'E', 'X']:
-            time_since_last = current_time - self.last_detected_time
-            if time_since_last >= self.debounce_interval:
+            time_since_last = current_time - config.last_detected_time
+            if time_since_last >= config.debounce_interval:
                 if symbol == '=':
                     self.result = str(self.calculate(self.expression))
                 elif symbol == 'E' and result != "":
@@ -107,7 +106,7 @@ class Arithmetic:
                 else:
                     if self.result == "":
                         self.expression += str(symbol)
-                self.last_detected_time = current_time
+                config.last_detected_time = current_time
         
         if self.expression == "":
             text = "Proceed any numeric gesture"

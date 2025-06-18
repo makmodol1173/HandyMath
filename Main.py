@@ -1,10 +1,10 @@
 import cv2
 import time
-from Detector import Detector
-from Arithmetic import Arithmetic
-from Matrix import Matrix
-from Complex import Complex
-from Interface import Interface
+from detector import Detector
+from arithmetic import Arithmetic
+from matrix import Matrix
+from complex import Complex
+from interface import Interface
 import config
 
 class Main:

@@ -1,8 +1,8 @@
 import cv2
 import time
 import numpy as np
-from Detector import Detector
-from Interface import Interface
+from detector import Detector
+from interface import Interface
 import config
 
 class Matrix:
