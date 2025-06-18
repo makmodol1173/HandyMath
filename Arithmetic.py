@@ -26,10 +26,7 @@ class Arithmetic:
         if len(self.operands) < 2:
             self.operators.pop()
             return "Invalid Expression"
-        
-        print(f"Operends: {self.operands}")
-        print(f"Operators: {self.operators}")
-
+    
         right = self.operands.pop()
         left = self.operands.pop()
         op = self.operators.pop()
@@ -93,16 +90,19 @@ class Arithmetic:
         symbol = self.detector.detect_symbol(landmarks)
         print(f"Detected Symbol: {symbol}")
 
-        if isinstance(symbol, int) and 0 <= symbol <= 9 or symbol in ['=', '+', '-', '*', '/', '^', '(', ')', 'E', 'X']:
-            time_since_last = current_time - config.last_detected_time
-            if time_since_last >= config.debounce_interval:
+        if (isinstance(symbol, int) and 0 <= symbol <= 9) or symbol in ['=', '+', '-', '*', '/', '^', '(', ')', 'E', 'X'] and self.result=="":
+            if current_time - config.last_detected_time >= config.debounce_interval:
                 if symbol == '=':
                     self.result = str(self.calculate(self.expression))
-                elif symbol == 'E' and result != "":
+                elif symbol == 'E':
+                    self.expression = self.expression[:-1]
+                elif symbol == 'X':
                     self.expression = ""
                     self.result = ""
-                elif symbol == 'X' and result != "":
-                    self.expression = self.expression[:-1]
+                elif symbol == 0 and self.result != "":
+                    self.expression = ""
+                    self.result = ""
+                    config.mode = None
                 else:
                     if self.result == "":
                         self.expression += str(symbol)
@@ -125,3 +125,7 @@ class Arithmetic:
             x_pos = 50
             y_pos = 150
             cv2.putText(frame, text, (x_pos, y_pos), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
+
+            # Back menu
+            text = "0. Exit"
+            cv2.putText(frame, text, (50, 200), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
