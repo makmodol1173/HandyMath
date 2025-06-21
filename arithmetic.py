@@ -1,5 +1,6 @@
 import cv2
 import time
+import re
 import config
 from detector import Detector
 
@@ -20,11 +21,7 @@ class Arithmetic:
         return 0
     
     def apply_operation(self):
-        if len(self.operators) == 0:
-            return "Invalid Expression"
-
-        if len(self.operands) < 2:
-            self.operators.pop()
+        if len(self.operators) == 0 or len(self.operands) < 2:
             return "Invalid Expression"
     
         right = self.operands.pop()
@@ -38,46 +35,68 @@ class Arithmetic:
         elif op == '*':
             return left * right
         elif op == '/':
+            if right == 0:
+                raise ZeroDivisionError("Invalid Operation")
             return left / right if right != 0 else float('inf')
     
+    def validate_expression(self, expression):
+        if not expression or not re.fullmatch(r"[0-9\.\+\-\*/\(\)\s]+", expression):
+            return False
+        return True
+            
     def calculate(self, expression):
+        if not self.validate_expression(expression):
+            return "Invalid Expression"
+
         self.operators = []
         self.operands = []
         i = 0
-        while i < len(expression):
-            if expression[i] == ' ':
-                i += 1
-                continue
-            if expression[i] == '(':
-                self.operators.append(expression[i])
-            elif expression[i] == ')':
-                while len(self.operators) > 0 and self.operators[-1] != '(':
-                    result = self.apply_operation()
-                    if result is not None:
-                        self.operands.append(result)
-                self.operators.pop()
-            elif expression[i].isdigit():
-                num = 0
-                while (i < len(expression) and expression[i].isdigit()):
-                    num = (num * 10) + int(expression[i])
+        n = len(expression)
+
+        try:
+            while i < n:
+                if expression[i] == ' ':
                     i += 1
-                self.operands.append(num)
-                continue
-            else:
-                while (len(self.operators) > 0 and self.precedence(self.operators[-1]) >= self.precedence(expression[i])):
-                    result = self.apply_operation()
-                    if result is not None:
+                    continue
+
+                if expression[i] == '(':
+                    self.operators.append(expression[i])
+                elif expression[i] == ')':
+                    while len(self.operators) > 0 and self.operators[-1] != '(':
+                        result = self.apply_operation()
                         self.operands.append(result)
-                self.operators.append(expression[i])
-            i += 1
-        
-        while len(self.operators) > 0:
-            result = self.apply_operation()
-            if result is not None:
+                    if self.operators and self.operators[-1] == '(':
+                        self.operators.pop()
+                    else:
+                        return "Mismatched parentheses"
+                elif expression[i].isdigit():
+                    num = 0
+                    while (i < n and expression[i].isdigit()):
+                        num = (num * 10) + int(expression[i])
+                        i += 1
+                    self.operands.append(num)
+                    continue
+                else:
+                    while (len(self.operators) > 0 and self.operators[-1] != '(' and self.precedence(self.operators[-1]) >= self.precedence(expression[i])):
+                        result = self.apply_operation()
+                        self.operands.append(result)
+                    self.operators.append(expression[i])
+                i += 1
+            
+            while len(self.operators) > 0:
+                if self.operators[-1] == '(':
+                    return "Mismatched parentheses"
+                result = self.apply_operation()
                 self.operands.append(result)
-        
-        return self.operands[-1] if len(self.operands) > 0 else None
-    
+            
+            return round(self.operands[-1], 5) if len(self.operands) > 0 else None
+
+        except ZeroDivisionError:
+            return "Invalid Operation"
+        except Exception as exception:
+            print(str(exception))
+            return f"Error Occurred"
+
     def proceed(self, frame, landmarks):
         current_time = time.time()
 
@@ -90,7 +109,8 @@ class Arithmetic:
         symbol = self.detector.detect_symbol(landmarks)
         print(f"Detected Symbol: {symbol}")
 
-        if (isinstance(symbol, int) and 0 <= symbol <= 9) or symbol in ['=', '+', '-', '*', '/', '^', '(', ')', 'E', 'X'] and self.result=="":
+        valid_symbols = ['=', '+', '-', '*', '^', '/', '(', ')', 'E', 'X']
+        if (isinstance(symbol, int) and 0 <= symbol <= 9) or (symbol in valid_symbols and self.result == ""):
             if current_time - config.last_detected_time >= config.debounce_interval:
                 if symbol == '=':
                     self.result = str(self.calculate(self.expression))
