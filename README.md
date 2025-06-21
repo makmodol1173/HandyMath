@@ -79,3 +79,111 @@ python main.py
 | `7`   | Thumb + Two fingers   | `)`    |
 | `8`   | Three fingers + Thumb | `E`    |
 | `9`   | Index + Pinky         | `X`    |
+
+- `E` represent `Backspace`
+- `X` represent `Clear All`
+
+## Workflow
+
+### Main
+
+### Arithmetic
+
+#### Features
+
+1. Gesture-Driven Input:
+
+   - Detects digits (0–9) and operators (+, -, \*, /, (, )) using hand gestures.
+   - Supports special gestures:
+     - `=` → Evaluate expression
+     - `E` → Backspace (delete last character)
+     - `X` → Clear expression/result
+     - `0` (after result shown) → Exit back
+
+2. Arithmetic Expression Evaluator:
+
+   - Operator precedence (+, -, \*, /)
+   - Parentheses for grouping
+   - Reject division by zero and mismatched parentheses
+
+3. Visual Feedback with OpenCV:
+   - Renders current expression and result on screen
+   - Prompts user with "Proceed any numeric gesture" if empty
+   - Prompts exit instruction after evaluation
+
+#### Execution Flow
+
+1. Class Initialization
+
+   - Initializes two stacks: operands and operators
+   - Initializes detector for gesture recognition
+   - Stores the current expression and result
+
+2. Process the frame with landmarks:
+
+   - Render title text: “Arithmetic Calculation”
+   - Detect a symbol from hand landmarks
+   - If symbol is valid and debounce interval passed:
+     - = → Evaluate expression using calculate()
+     - E → Backspace
+     - X → Clear
+     - 0 → Exit mode if result shown
+     - Otherwise append digit/operator to expression
+   - Expression is being typed and shown real-time
+   - Result shown if available
+   - Exit command
+
+3. Calculating Expression
+
+   - The arithmetic expression is parsed and evaluated manually using two stacks.
+   - Uses regex to reject expressions with illegal characters
+   - Handles empty or malformed strings
+   - Parsing Loop iterates over characters:
+     - (`digit`) → parse full number
+     - `(` → push to operator stack
+     - `)` → evaluate stack until matching `(`
+     - operators → handle precedence (pop previous ops if needed)
+     - unary minus → detected when `-` follows operator or `(`
+   - Uses apply_operation() to compute binary operations
+   - Ensures proper precedence
+   - Handles division-by-zero safely
+   - Returns result (rounded to 5 decimal places) or error message
+
+4. Applying Operation
+
+   - Pops two operands and one operator from the stacks, performs the operation
+   - Checks for division-by-zero
+   - Returns computed result
+
+5. Precedence is uded to detemine evaluation order.
+
+#### Algorithmic Flow
+
+The evaluator is a classic 2-stack infix parser, inspired by the Shunting Yard Algorithm by Edsger Dijkstra.
+
+- Loop through each character:
+  - If number → push to operand stack
+  - If operator:
+    - While top of operator stack has higher/equal precedence → pop & apply
+    - Push current operator
+  - If `(` → push
+  - If `)` → pop & apply until `(`
+- After loop → evaluate remaining operators
+
+Stacks:
+
+- Operand Stack: stores numbers (int)
+- Operator Stack: stores operators (+, -, etc.)
+
+### Marix
+
+### Complex
+
+## Contribution
+
+### Arithmatic
+
+1. handle floating point precision
+2. handle railing or leading operators ("+2" or "3\*" or "-2+5" or "(-2+0)")
+3. handle associativity of operators (e.g., exponentiation is right-associative: 2 ** 3 ** 2 = 512)
+4. handle power(`^`) calculation
