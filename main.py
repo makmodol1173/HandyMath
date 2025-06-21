@@ -89,8 +89,9 @@ class Main:
 
             elif config.mode is not None and config.is_activated:
                 text = f"Mode: {config.mode}"
-                (text_width, text_height), _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 1, 2)
-                x_pos = frame.shape[1] - text_width - 30
+                text_sizes = [cv2.getTextSize(option, cv2.FONT_HERSHEY_SIMPLEX, 0.8, 2)[0] for option in ["Arithmetic", "Matrix", "Complex"]]
+                max_width = max([w for (w, h) in text_sizes])
+                x_pos = frame.shape[1] - max_width - 170
                 y_pos = 100
                 cv2.putText(frame, text, (x_pos, y_pos), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2, cv2.LINE_AA)
 
