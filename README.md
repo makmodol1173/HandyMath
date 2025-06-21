@@ -21,18 +21,18 @@ This Python-based system enables users to solve both **arithmetic equations** an
 
 <table>
   <tr>
-    <td align="center"><img src="Images/0.jpg" width="100"/><br/>0</td>
-    <td align="center"><img src="Images/1.jpg" width="100"/><br/>1</td>
-    <td align="center"><img src="Images/2.jpg" width="100"/><br/>2</td>
-    <td align="center"><img src="Images/3.jpg" width="100"/><br/>3</td>
-    <td align="center"><img src="Images/4.jpg" width="100"/><br/>4</td>
+    <td align="center"><img src="images/0.jpg" width="100"/><br/>0</td>
+    <td align="center"><img src="images/1.jpg" width="100"/><br/>1</td>
+    <td align="center"><img src="images/2.jpg" width="100"/><br/>2</td>
+    <td align="center"><img src="images/3.jpg" width="100"/><br/>3</td>
+    <td align="center"><img src="images/4.jpg" width="100"/><br/>4</td>
   </tr>
   <tr>
-    <td align="center"><img src="Images/5.jpg" width="100"/><br/>5</td>
-    <td align="center"><img src="Images/6.jpg" width="100"/><br/>6</td>
-    <td align="center"><img src="Images/7.jpg" width="100"/><br/>7</td>
-    <td align="center"><img src="Images/8.jpg" width="100"/><br/>8</td>
-    <td align="center"><img src="Images/9.jpg" width="100"/><br/>9</td>
+    <td align="center"><img src="images/5.jpg" width="100"/><br/>5</td>
+    <td align="center"><img src="images/6.jpg" width="100"/><br/>6</td>
+    <td align="center"><img src="images/7.jpg" width="100"/><br/>7</td>
+    <td align="center"><img src="images/8.jpg" width="100"/><br/>8</td>
+    <td align="center"><img src="images/9.jpg" width="100"/><br/>9</td>
   </tr>
 </table>
 
