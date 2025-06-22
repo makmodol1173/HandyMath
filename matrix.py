@@ -16,6 +16,8 @@ class Matrix:
         self.current_row = 0
         self.current_col = 0
         self.operand_matrices = []
+        self.matrix_input_completed = False
+
 
     def validate_square(self, matrix):
         if matrix.shape[0] != matrix.shape[1]:
@@ -240,7 +242,6 @@ class Matrix:
         else:
             # Show current operation mode label
             text = f"Matrix Operation Mode: {self.operation_mode}"
-            (text_width, text_height), _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 1, 2)
             x_pos = 50
             y_pos = 150
             cv2.putText(frame, text, (x_pos, y_pos), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2, cv2.LINE_AA)
@@ -259,6 +260,7 @@ class Matrix:
 
     def handle_input_mode(self, frame, symbol):
         current_time = time.time()
+        exit_pos = 200
         # Handle matrix selection
         if self.current_matrix is None:
             text = "Select Matrix ID(1-9):"
@@ -267,9 +269,10 @@ class Matrix:
                 if current_time - config.last_detected_time >= config.debounce_interval:
                     if symbol in self.matrices:
                         self.current_matrix = symbol
+                        config.last_detected_time = current_time
                     else:
-                        cv2.putText(frame, f"Matrix M{symbol} does not exist.", (50, 200), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
-                    config.last_detected_time = current_time
+                        exit_pos = 250
+                        cv2.putText(frame, f"Selected Matrices: M{symbol} not found", (50, 200), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
         
         # Displaying selected matrix id
         if self.current_matrix is not None:
@@ -282,7 +285,7 @@ class Matrix:
             lines = matrix_str.split('\n')
             for i, line in enumerate(lines):
                 cv2.putText(frame, line, (50, y_offset), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 0), 2)
-                y_offset += 30        
+                y_offset += 30      
 
         # Getting input
         if self.current_matrix is not None and self.current_matrix in self.matrices:
@@ -291,40 +294,57 @@ class Matrix:
                     matrix = self.matrices[self.current_matrix]
                     if self.current_row < matrix.shape[0] and self.current_col < matrix.shape[1]:
                         matrix[self.current_row, self.current_col] = symbol
+                        config.last_detected_time = current_time
                         
                         # Move to next position
                         self.current_col += 1
                         if self.current_col >= matrix.shape[1]:
                             self.current_col = 0
                             self.current_row += 1
-                        config.last_detected_time = current_time
-        
-        # Back menu
-        text = "0. Exit"
-        y_pos = 200 if self.current_matrix is None else y_offset 
-        cv2.putText(frame, text, (50, y_pos), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
-        if isinstance(symbol, int) and symbol == 0:
+                        if self.current_row >= matrix.shape[0]:
+                            self.matrix_input_completed = True
+            
+        if self.matrix_input_completed:
+            cv2.putText(frame, f"Matrix M{self.current_matrix} input completed", (50, y_offset), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
             if current_time - config.last_detected_time >= config.debounce_interval:
                 self.mode = None
                 self.current_matrix = None
                 self.current_row = 0
                 self.current_col = 0
-                config.last_detected_time = current_time
+                self.matrix_input_completed = False
+
+        if self.current_matrix is None:
+            # Back menu
+            text = "0. Exit"
+            y_pos = exit_pos
+            cv2.putText(frame, text, (50, y_pos), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+            if isinstance(symbol, int) and symbol == 0:
+                if current_time - config.last_detected_time >= config.debounce_interval:
+                    self.mode = None
+                    self.current_matrix = None
+                    self.current_row = 0
+                    self.current_col = 0
+                    config.last_detected_time = current_time
 
     def handle_selection_mode(self, frame, symbol):
         current_time = time.time()
+        exit_pos = 200
         # Handle matrix selection
         if self.current_matrix is None:
             text = "Select Matrix ID(1-9):"
             cv2.putText(frame, text, (50, 150), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
             if isinstance(symbol, int) and 1 <= symbol <= 9:
                 if current_time - config.last_detected_time >= config.debounce_interval:
-                    self.current_matrix = symbol
-                    config.last_detected_time = current_time
+                    if symbol in self.matrices:
+                        self.current_matrix = symbol
+                        config.last_detected_time = current_time
+                    else:
+                        exit_pos = 250
+                        cv2.putText(frame, f"Selected Matrices: M{symbol} not found", (50, 200), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
         
         # Displaying selected matrix id
         elif self.current_matrix is not None and self.current_matrix in self.matrices:
-            cv2.putText(frame, f"Selected Matrix: M{self.matrices[[self.current_matrix]]}", (50, 150), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+            cv2.putText(frame, f"Selected Matrix: M{self.current_matrix}", (50, 150), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
 
         # Show matrix content if selected
         y_offset = 200
@@ -334,10 +354,11 @@ class Matrix:
             for i, line in enumerate(lines):
                 cv2.putText(frame, line, (50, y_offset), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 0), 2)
                 y_offset += 30
+            exit_pos = y_offset + 20
 
         # Back menu
         text = "0. Exit"
-        y_pos = 200 if self.current_matrix is None else y_offset
+        y_pos = exit_pos
         cv2.putText(frame, text, (50, y_pos), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
         if isinstance(symbol, int) and symbol == 0:
             if current_time - config.last_detected_time >= config.debounce_interval:
@@ -358,7 +379,7 @@ class Matrix:
                     self.current_matrix = symbol
                     config.last_detected_time = current_time
         
-        # Displaying current matrix id
+        # Displaying current matrix
         elif self.current_matrix is not None:
             cv2.putText(frame, f"Creating Matrix: M{self.current_matrix}", (50, 150), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
 
@@ -369,6 +390,7 @@ class Matrix:
                     if current_time - config.last_detected_time >= config.debounce_interval:
                         self.current_row = symbol
                         config.last_detected_time = current_time
+
         # Displaying current row
         elif self.current_matrix is not None and self.current_row != 0:
             cv2.putText(frame, f"Selected Row: {self.current_row}", (50, 200), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
