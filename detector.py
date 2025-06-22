@@ -9,102 +9,86 @@ class Detector:
 
     def detect_hands(self, frame):
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        landmarks = self.hands.process(frame_rgb)
-        return landmarks
+        return self.hands.process(frame_rgb)
     
-    def draw_landmarks(self, frame, landmarks):
-        if landmarks.multi_hand_landmarks:
+    def draw_landmarks(self, frame, results):
+        if results.multi_hand_landmarks:
             # idx require for detecting which hands from multiple hand
-            for idx, hand_landmarks in enumerate(landmarks.multi_hand_landmarks):
+            for idx, hand_landmarks in enumerate(results.multi_hand_landmarks):
                
                 # extract the label(left, right) of the hand
-                handedness = landmarks.multi_handedness[idx].classification[0].label
+                label = results.multi_handedness[idx].classification[0].label
                
                 # Get the first(wrist) landmark for text positioning
                 wrist_x = int(hand_landmarks.landmark[self.mp_hands.HandLandmark.WRIST].x * frame.shape[1])
                 wrist_y = int(hand_landmarks.landmark[self.mp_hands.HandLandmark.WRIST].y * frame.shape[0])
 
                 # Draw the handedness text
-                cv2.putText(frame, handedness, (wrist_x - 20, wrist_y + 20), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
+                cv2.putText(frame, label, (wrist_x - 20, wrist_y + 20), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
 
                 # Draw the landmarks
                 self.mp_draw.draw_landmarks(frame, hand_landmarks, self.mp_hands.HAND_CONNECTIONS)
         return frame
 
-    def detect_symbol(self, landmarks):
+    def detect_symbol(self, results):
+        if not (results.multi_hand_landmarks and results.multi_handedness):
+            return -1
+
         FINGER_TIPS = [4, 8, 12, 16, 20]
     
-        if landmarks.multi_hand_landmarks and landmarks.multi_handedness:
-            for idx, hand_info in enumerate(landmarks.multi_handedness):
-                label = hand_info.classification[0].label
-                fingers = []
-                hand_landmarks = landmarks.multi_hand_landmarks[idx]
+        for idx, hand_info in enumerate(results.multi_handedness):
+            label = hand_info.classification[0].label
+            hand_landmarks = results.multi_hand_landmarks[idx]
     
-                if label == "Right":
-    
-                    # Thumb
-                    thumb_up = hand_landmarks.landmark[FINGER_TIPS[0]].x > hand_landmarks.landmark[FINGER_TIPS[0] - 1].x
-                    fingers.append(1 if thumb_up else 0)
-    
-                    # Other fingers
-                    for tip in FINGER_TIPS[1:]:
-                        fingers.append(1 if hand_landmarks.landmark[tip].y < hand_landmarks.landmark[tip - 2].y else 0)
-    
-                    # Map to numbers
-                    if fingers == [0, 0, 0, 0, 0]: return 0
-                    if fingers == [0, 1, 0, 0, 0]: return 1
-                    if fingers == [0, 1, 1, 0, 0]: return 2
-                    if fingers == [0, 1, 1, 1, 0]: return 3
-                    if fingers == [0, 1, 1, 1, 1]: return 4
-                    if fingers == [1, 1, 1, 1, 1]: return 5
-                    if fingers == [1, 0, 0, 0, 1]: return 6
-                    if fingers == [1, 1, 0, 0, 1]: return 7
-                    if fingers == [1, 1, 1, 0, 1]: return 8
-                    if fingers == [0, 1, 0, 0, 1]: return 9
-    
-                elif label == "Left":
+            thumb = hand_landmarks.landmark[FINGER_TIPS[0]].x > hand_landmarks.landmark[FINGER_TIPS[0] - 1].x if label == "Right" else hand_landmarks.landmark[FINGER_TIPS[0]].x < hand_landmarks.landmark[FINGER_TIPS[0] - 1].x
+            fingers = [1 if thumb else 0]
+            fingers += [1 if hand_landmarks.landmark[tip].y < hand_landmarks.landmark[tip - 2].y else 0 for tip in FINGER_TIPS[1:]]
 
-                    # Thumb
-                    thumb_up = hand_landmarks.landmark[FINGER_TIPS[0]].x < hand_landmarks.landmark[FINGER_TIPS[0] - 1].x
-                    fingers.append(1 if thumb_up else 0)
-    
-                    # Other fingers
-                    for tip in FINGER_TIPS[1:]:
-                        fingers.append(1 if hand_landmarks.landmark[tip].y < hand_landmarks.landmark[tip - 2].y else 0)
-    
-                    # Map to operators
-                    if fingers == [0, 0, 0, 0, 0]: return '='
-                    if fingers == [0, 1, 0, 0, 0]: return '+'
-                    if fingers == [0, 1, 1, 0, 0]: return '-'
-                    if fingers == [0, 1, 1, 1, 0]: return '*'
-                    if fingers == [0, 1, 1, 1, 1]: return '/'
-                    if fingers == [1, 1, 1, 1, 1]: return '^'
-                    if fingers == [1, 0, 0, 0, 1]: return '('
-                    if fingers == [1, 1, 0, 0, 1]: return ')'
-                    if fingers == [1, 1, 1, 0, 1]: return 'E'
-                    if fingers == [0, 1, 0, 0, 1]: return 'X'
+            if label == "Right":
+                return {
+                    (0, 0, 0, 0, 0): 0, 
+                    (0, 1, 0, 0, 0): 1, 
+                    (0, 1, 1, 0, 0): 2,
+                    (0, 1, 1, 1, 0): 3, 
+                    (0, 1, 1, 1, 1): 4, 
+                    (1, 1, 1, 1, 1): 5,
+                    (1, 0, 0, 0, 1): 6, 
+                    (1, 1, 0, 0, 1): 7, 
+                    (1, 1, 1, 0, 1): 8,
+                    (0, 1, 0, 0, 1): 9
+                }.get(tuple(fingers), -1)
+
+            if label == "Left":
+                return {
+                    (0, 0, 0, 0, 0): '=', 
+                    (0, 1, 0, 0, 0): '+', 
+                    (0, 1, 1, 0, 0): '-',
+                    (0, 1, 1, 1, 0): '*', 
+                    (0, 1, 1, 1, 1): '/', 
+                    (1, 1, 1, 1, 1): '^',
+                    (1, 0, 0, 0, 1): '(', 
+                    (1, 1, 0, 0, 1): ')', 
+                    (1, 1, 1, 0, 1): 'E',
+                    (0, 1, 0, 0, 1): 'X'
+                }.get(tuple(fingers), -1)
     
         return -1
 
-    def detect_thumb(self, landmarks):
+    def detect_thumb(self, results):
+        if not (results.multi_hand_landmarks and results.multi_handedness):
+            return False
+
         FINGER_TIP = 4
         THUMB_IP = 3
+        thumbs = {"Left": False, "Right": False}
     
-        thumbs_up = {"Left": False, "Right": False}
+        for idx, hand_info in enumerate(results.multi_handedness):
+            label = hand_info.classification[0].label
+            hand_landmarks = results.multi_hand_landmarks[idx]
     
-        if landmarks.multi_hand_landmarks and landmarks.multi_handedness:
-            for idx, hand_info in enumerate(landmarks.multi_handedness):
-                label = hand_info.classification[0].label
-                hand_landmarks = landmarks.multi_hand_landmarks[idx]
+            tip = hand_landmarks.landmark[FINGER_TIP]
+            ip = hand_landmarks.landmark[THUMB_IP]
     
-                tip = hand_landmarks.landmark[FINGER_TIP]
-                ip = hand_landmarks.landmark[THUMB_IP]
+            thumbs[label] = tip.x > ip.x if label == "Right" else tip.x < ip.x
     
-                if label == "Right":
-                    thumbs_up["Right"] = tip.x > ip.x
-                elif label == "Left":
-                    thumbs_up["Left"] = tip.x < ip.x
-    
-        return thumbs_up["Right"] and thumbs_up["Left"]
-
-
+        return thumbs["Right"] and thumbs["Left"]
