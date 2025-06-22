@@ -159,21 +159,31 @@ class Matrix:
             
     def handle_binary_operation(self, frame, symbol, operator):
         current_time = time.time()
+        exit_pos = 250
         if len(self.operand_matrices) == 0:
             text = "Select Matrix ID(1-9):"
             cv2.putText(frame, text, (50, 200), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
             if isinstance(symbol, int) and 1 <= symbol <= 9:
                 if current_time - config.last_detected_time >= config.debounce_interval:
-                    self.operand_matrices.append(symbol)
-                    config.last_detected_time = current_time
+                    if symbol in self.matrices:
+                        self.operand_matrices.append(symbol)
+                        config.last_detected_time = current_time
+                    else:
+                        exit_pos = 300
+                        cv2.putText(frame, f"Selected Matrices: M{symbol} not found", (50, 250), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
 
         elif len(self.operand_matrices) == 1:
+            exit_pos = exit_pos + 50
             text = "Select another Matrix ID(1-9):"
             cv2.putText(frame, text, (50, 250), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
             if isinstance(symbol, int) and 1 <= symbol <= 9:
                 if current_time - config.last_detected_time >= config.debounce_interval:
-                    self.operand_matrices.append(symbol)
-                    config.last_detected_time = current_time
+                    if symbol in self.matrices:
+                        self.operand_matrices.append(symbol)
+                        config.last_detected_time = current_time
+                    else:
+                        exit_pos = 350
+                        cv2.putText(frame, f"Selected Matrices: M{symbol} not found", (50, 300), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
         
         elif len(self.operand_matrices) == 2:
             m1 = self.matrices[self.operand_matrices[0]]
@@ -183,8 +193,8 @@ class Matrix:
                     raise ValueError("Shape mismatch")
                 self.matrices["R"] = m1 + m2 if operator == "+" else m1 - m2 if operator == "-" else np.matmul(m1, m2)
             except ValueError as exception:
-                print(f"{exception}")
-                cv2.putText(frame, f"Error occured", (50, 300), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
+                exit_pos = 350
+                cv2.putText(frame, f"{exception}", (50, 300), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
         
         if len(self.operand_matrices) >= 1:
             cv2.putText(frame, f"Selected Matrices: M{self.operand_matrices[0]}", (50, 200), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
@@ -199,22 +209,23 @@ class Matrix:
             lines = matrix_str.split('\n')
             for i, line in enumerate(lines):
                 cv2.putText(frame, line, (50, y_offset), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 0), 2)
-                y_offset += 30        
+                y_offset += 30
+            exit_pos = y_offset + 20        
             
-            # Back menu
-            text = "0. Exit"
-            y_pos = 350 if "R" not in self.matrices else y_offset
-            cv2.putText(frame, text, (50, y_pos), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
-            if isinstance(symbol, int) and symbol == 0:
-                if current_time - config.last_detected_time >= config.debounce_interval:
-                    self.operation_mode = None
-                    self.current_matrix = None
-                    self.current_row = 0
-                    self.current_col = 0
-                    if "R" in self.matrices:
-                        del self.matrices["R"]
-                    self.operand_matrices.clear()
-                    config.last_detected_time = current_time
+        # Back menu
+        text = "0. Exit"
+        y_pos = exit_pos
+        cv2.putText(frame, text, (50, y_pos), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+        if isinstance(symbol, int) and symbol == 0:
+            if current_time - config.last_detected_time >= config.debounce_interval:
+                self.operation_mode = None
+                self.current_matrix = None
+                self.current_row = 0
+                self.current_col = 0
+                if "R" in self.matrices:
+                    del self.matrices["R"]
+                self.operand_matrices.clear()
+                config.last_detected_time = current_time
 
     def handle_operation_mode(self, frame, symbol):
         if self.operation_mode is None:
