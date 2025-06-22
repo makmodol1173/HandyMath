@@ -177,13 +177,128 @@ Stacks:
 
 ### Marix
 
+#### Featues
+
+1.  Gesture-Driven Input:
+
+    - Uses hand landmarks to detect digits (0–9) via a `Detector` class.
+    - Controls all matrix actions through gestures:
+      - 0–4 → Mode selection (Dimension, Input, Select, Operation, Exit)
+      - 0–9 → Input matrix IDs, values, dimensions, etc.
+      - 0 (within modes) → Return to main menu
+
+2.  Matrix Management:
+
+    - Create matrices with custom dimensions.
+    - Fill matrices using gesture-based number input.
+    - View matrix contents.
+    - Supports storing multiple matrices (`M1`, `M2`, ..., `M9`).
+
+3.  Matrix Operations:
+
+    - Binary Operations: Addition, Subtraction, Multiplication
+    - Unary Operations: Transpos, Inverse (only for square and non-singular matrices), Determinant (only for square matrices)
+
+4.  Visual Feedback with OpenCV:
+
+    - Real-time frame rendering using `cv2.putText()`.
+    - Prompts user for inputs, shows selected matrices.
+    - Renders matrix values in structured format.
+    - Shows result matrices inline with labels.
+
+#### Control Flow
+
+1. Class Initialization
+
+   - Initializes detector for gesture recognition
+   - Initializes interface for menus
+   - Initializes state variables
+
+2. Process the frame with landmarks:
+
+   - Display “Matrix Calculation” header.
+   - Detect gesture using `detector.detect_symbol()`.
+   - If no mode selected:
+     - Show mode selection menu.
+     - Wait for valid gesture (1–4).
+   - If mode is selected:
+     - Display mode label.
+     - Dispatch control to respective handler: `handle_dimension_mode`, `handle_input_mode`, `handle_selection_mode`, `handle_operation_mode`
+
+3. Dimension Mode
+
+   - Prompt user to input matrix ID (1–9).
+   - Prompt number of rows (1–9).
+   - Prompt number of columns (1–9).
+   - Initialize matrix with `np.zeros((row, col))`.
+   - Confirm matrix creation and return to main menu.
+
+4. Input Mode
+   - Select matrix ID (must already exist).
+   - Display current matrix visually.
+   - Fill values one-by-one using digit gestures (0–9).
+   - Automatically proceeds cell-wise row by row.
+   - Mark as complete after filling all cells.
+5. Selection Mode
+
+   - Choose existing matrix by ID.
+   - Display matrix visually.
+   - Return to main menu with gesture `0`.
+
+6. Operation Mode
+   - 1 → Addition
+   - 2 → Subtraction
+   - 3 → Multiplication
+   - 4 → Transpose
+   - 5 → Determinant
+   - 6 → Inverse
+   - 0 → Exit
+
+#### Matrix Operation Logic
+
+**Binary Operation Flow (+, -, \*):**
+
+- Prompt user to select two matrix IDs.
+- Check compatibility:
+  - Add/Sub: shapes must match
+  - Multiply: inner dimensions must match
+- Perform operation using NumPy:
+  - `+`, `-`: element-wise
+  - `*`: matrix multiplication via `np.matmul()`
+- Store result in `self.matrices["R"]`
+- Display result visually
+
+**Unary Operation Flow (Transpose, Inverse, Determinant) :**
+
+- Prompt user to select one matrix ID.
+- For Transpose:
+  - Use `.T`
+- For Inverse:
+  - Check if matrix is square and non-singular
+  - Use `np.linalg.inv()`
+- For Deteminant:
+  - Validate square matrix
+  - use `np.linalg.det()`
+- Display result matrix
+
 ### Complex
+
+$$
+Upcoming...
+$$
 
 ## Contribution
 
+1. Thumbs-Up Gesture Detection
+
 ### Arithmatic
 
-1. handle floating point precision
-2. handle railing or leading operators ("+2" or "3\*" or "-2+5" or "(-2+0)")
-3. handle associativity of operators (e.g., exponentiation is right-associative: 2 ** 3 ** 2 = 512)
-4. handle power(`^`) calculation
+1. Floating-Point Precision Handling
+2. Support for Unary and Partial Operators (`+2` or `3\*` or `-2+5` or `(-2+0)`)
+3. Operator Associativity and Precedence (e.g., exponentiation is right-associative: `2 ** 3 ** 2 = 512`)
+4. Exponentiation(`^`) Support
+
+### Matrix
+
+1. Multi-Digit Gesture Input
+2. Matrix Cursor Navigation
