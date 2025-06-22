@@ -85,7 +85,91 @@ python main.py
 
 ## Workflow
 
+### Detector
+
+1. **Initialization:**
+
+   - Uses MediaPipe’s real-time hand tracking pipeline.
+   - Configured for up to 4 hands (`max_num_hands=4`), real-time tracking.
+   - Initializes drawing utility (`mp.solutions.drawing_utils`) for visual output.
+   - Defines landmark indices for finger tips (`[4, 8, 12, 16, 20]`).
+
+2. **Hand Detection:**
+
+   - Converts each frame to RGB (MediaPipe uses RGB).
+   - Passes the frame through the model to detect hand landmarks.
+   - Returns a `results` object with:
+     - `multi_hand_landmarks`: list of hand landmarks
+     - `multi_handedness`: list of `Left` / `Right` classifications
+
+3. **Draw Landmarks:**
+
+   - Draws hand skeleton and hand label (Left or Right) on the image.
+   - For each detected hand:
+     - Gets WRIST landmark to position the label text.
+     - Draws 21 landmarks and connections using drawing_utils.
+
+4. **Detect Symbol:**
+
+   This is the gesture recognition engine.
+
+   - Checks each detected hand and identifies:
+     - Which fingers are extended (1) or folded (0).
+     - Distinguishes between Left and Right hands.
+   - Constructs a binary finger pattern like [0, 1, 0, 0, 1].
+
+   Based on the pattern and hand type:
+
+   - Right hand → Mapped to digits `0–9`
+   - Left hand → Mapped to operators: `+`, `-`, `\*`, `/`, `^`, `=`, `(`, `)`, `E`, `X`
+   - Uses Python dictionaries for fast lookup and clear mapping logic.
+   - If the gesture doesn't match a known pattern → returns `-1`.
+
+5. **Thumbs Up Detection:**
+   - Detects activation gesture:
+   - Both thumbs must be up:
+     - Right thumb is considered `up` if tip is to the right of the joint.
+     - Left thumb is considered `up` if tip is to the left of the joint.
+   - Returns `True` only when both thumbs are up.
+   - Used to activate the main interface/menu of the system.
+
 ### Main
+
+1. **Webcam Initialization:**
+
+   - Opens a video stream.
+   - Sets resolution and prepares the frame capture loop.
+
+2. **Hand Detection & Landmark Tracking:**
+
+   - Process each frame and extract hand landmarks.
+   - Landmarks are visualized in real-time on the frame for feedback.
+
+3. **Activation Trigger:**
+
+   - System starts in an idle state showing a welcome message.
+   - Activation occurs via a specific gesture (e.g., double thumbs up), after which the system enters interaction mode.
+
+4. **Main Menu Navigation (Gesture-Driven):**
+
+   - `1` → Arithmetic Mode
+   - `2` → Matrix Mode
+   - `3` → Complex Mode
+   - `0` → Deactivate and return to idle state
+
+5. **Visual Feedback:**
+
+   - Displays current mode and frame rate (FPS) on screen.
+
+6. **Debounce and Cooldown Handling:**
+
+   - Ensures that gestures are not registered multiple times too quickly.
+   - Prevents mode switching or symbol detection until a safe interval has passed.
+
+7. **Exit Condition:**
+
+   - Pressing the 'q' key gracefully exits the program.
+   - Releases webcam resources and closes all OpenCV windows.
 
 ### Arithmetic
 
@@ -108,7 +192,7 @@ python main.py
 
 3. Visual Feedback with OpenCV:
    - Renders current expression and result on screen
-   - Prompts user with "Proceed any numeric gesture" if empty
+   - Prompts user with Proceed any numeric gesture" if empty
    - Prompts exit instruction after evaluation
 
 #### Execution Flow
@@ -290,6 +374,10 @@ $$
 ## Contribution
 
 1. Thumbs-Up Gesture Detection
+2. Reduce code size
+   - Make a common function for `putText`, Matrix Selection etc
+   - Immediate if converted to `and` operator
+3. Audio feedback for symbol detection and menu showing
 
 ### Arithmatic
 
@@ -302,3 +390,4 @@ $$
 
 1. Multi-Digit Gesture Input
 2. Matrix Cursor Navigation
+3. Matrix data type should be Integer
