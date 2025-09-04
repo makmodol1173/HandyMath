@@ -52,33 +52,33 @@ python main.py
 
 ### Right Hand — **Number Input**
 
-| Index | Decription            | Symbol |
-| ----- | --------------------- | ------ |
-| `0`   | All fingers closed    | `0`    |
-| `1`   | Index finger          | `1`    |
-| `2`   | Index + Middle        | `2`    |
-| `3`   | Index + Middle + Ring | `3`    |
-| `4`   | Four fingers          | `4`    |
-| `5`   | All fingers open      | `5`    |
-| `6`   | Thumb + Pinky         | `6`    |
-| `7`   | Thumb + Two fingers   | `7`    |
-| `8`   | Three fingers + Thumb | `8`    |
-| `9`   | Index + Pinky         | `9`    |
+| Index | Decription                    | Symbol |
+| ----- | ----------------------------- | ------ |
+| `0`   | All fingers closed            | `0`    |
+| `1`   | Index finger                  | `1`    |
+| `2`   | Index + Middle                | `2`    |
+| `3`   | Index + Middle + Ring         | `3`    |
+| `4`   | Index + Middle + Ring + Pinky | `4`    |
+| `5`   | All fingers open              | `5`    |
+| `6`   | Thumb + Pinky                 | `6`    |
+| `7`   | Thumb + Index + Pinky         | `7`    |
+| `8`   | Thumb + Index + Middle + Pinky| `8`    |
+| `9`   | Index + Pinky                 | `9`    |
 
 ### Left Hand — **Operators**
 
-| Index | Decription            | Symbol |
-| ----- | --------------------- | ------ |
-| `0`   | All fingers closed    | `=`    |
-| `1`   | Index finger          | `+`    |
-| `2`   | Index + Middle        | `-`    |
-| `3`   | Index + Middle + Ring | `*`    |
-| `4`   | Four fingers          | `/`    |
-| `5`   | All fingers open      | `^`    |
-| `6`   | Thumb + Pinky         | `(`    |
-| `7`   | Thumb + Two fingers   | `)`    |
-| `8`   | Three fingers + Thumb | `E`    |
-| `9`   | Index + Pinky         | `X`    |
+| Index | Decription                    | Symbol |
+| ----- | ----------------------------- | ------ |
+| `0`   | All fingers closed            | `=`    |
+| `1`   | Index finger                  | `+`    |
+| `2`   | Index + Middle                | `-`    |
+| `3`   | Index + Middle + Ring         | `*`    |
+| `4`   | Index + Middle + Ring + Pinky | `/`    |
+| `5`   | All fingers open              | `^`    |
+| `6`   | Thumb + Index + Pinky         | `(`    |
+| `7`   | Thumb + Two fingers           | `)`    |
+| `8`   | Thumb + Index + Middle + Pinky| `E`    |
+| `9`   | Index + Pinky                 | `X`    |
 
 - `E` represent `Backspace`
 - `X` represent `Clear All`
