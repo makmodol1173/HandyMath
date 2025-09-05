@@ -15,6 +15,15 @@ HandyMath is a computer‐vision “gesture calculator” that lets you draw num
 git clone https://github.com/makmodol1173/HandyMath.git
 cd HandyMath
 
+# Create a virtual environment
+python -m venv venv
+
+# Activate the virtual environment
+# On Windows
+venv\Scripts\activate
+# On macOS/Linux
+# source venv/bin/activate
+
 # Install required module
 pip install -r requirements.txt
 
