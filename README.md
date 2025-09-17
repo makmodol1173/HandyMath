@@ -84,8 +84,8 @@ python main.py
 | `3`   | Index + Middle + Ring         | `*`    |
 | `4`   | Index + Middle + Ring + Pinky | `/`    |
 | `5`   | All fingers open              | `^`    |
-| `6`   | Thumb + Index + Pinky         | `(`    |
-| `7`   | Thumb + Two fingers           | `)`    |
+| `6`   | Thumb + Pinky                 | `(`    |
+| `7`   | Thumb + Index + Pinky         | `)`    |
 | `8`   | Thumb + Index + Middle + Pinky| `E`    |
 | `9`   | Index + Pinky                 | `X`    |
 
