@@ -5,6 +5,8 @@ from arithmetic import Arithmetic
 from matrix import Matrix
 from complex import Complex
 from interface import Interface
+from socket_server import SocketServer
+
 import config
 
 def main():
@@ -18,6 +20,8 @@ def main():
 
     detector = Detector()
     interface = Interface()
+    socket_server = SocketServer()
+
     handlers = {
         "Arithmetic": Arithmetic().proceed,
         "Matrix": Matrix().proceed,
@@ -36,6 +40,7 @@ def main():
             frame = cv2.flip(frame, 1)
             landmarks = detector.detect_hands(frame)
             frame = detector.draw_landmarks(frame, landmarks)
+            socket_server.send_landmarks(landmarks, frame.shape)
 
             if not config.is_activated:
                 cv2.putText(frame, "Welcome to HandyMath", (400, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
@@ -80,6 +85,7 @@ def main():
     finally:            
         cap.release()
         cv2.destroyAllWindows()
+        socket_server.close()
 
 if __name__ == "__main__":
     main()
