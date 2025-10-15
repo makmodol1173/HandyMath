@@ -10,7 +10,8 @@ class Complex:
     def proceed(self, frame, landmarks):
         current_time = time.time()
         symbol = self.detector.detect_symbol(landmarks)
-        print(f"Detected Symbol: {symbol}")
+        if(symbol != -1):
+            print(f"Detected Symbol: {symbol}")
 
         text = "Complex Calculation\n(Coming Soon)"
         (text_width, text_height), _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 1, 2)

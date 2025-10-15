@@ -40,7 +40,8 @@ class Matrix:
         cv2.putText(frame, text, (x_pos, y_pos), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2, cv2.LINE_AA)
 
         symbol = self.detector.detect_symbol(landmarks)
-        print(f"Detected Symbol: {symbol}")
+        if(symbol != -1):
+            print(f"Detected Symbol: {symbol}")
 
         # Handle initial menu and cooldown
         if self.mode is None:
