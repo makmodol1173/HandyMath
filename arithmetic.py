@@ -1,8 +1,10 @@
+import socket
 import cv2
 import time
 import re
 import config
 from detector import Detector
+from socket_server import SocketServer
 
 class Arithmetic:
 
@@ -12,6 +14,7 @@ class Arithmetic:
         self.expression = ""
         self.result = ""
         self.detector = Detector()
+        self.socket_server = SocketServer()
 
     def precedence(self, operator):
         if operator == '+' or operator == '-':
@@ -82,19 +85,22 @@ class Arithmetic:
                         self.operands.append(result)
                     self.operators.append(expression[i])
                 i += 1
-            
+
             while len(self.operators) > 0:
                 if self.operators[-1] == '(':
                     return "Mismatched parentheses"
                 result = self.apply_operation()
                 self.operands.append(result)
-            
-            return round(self.operands[-1], 5) if len(self.operands) > 0 else None
+    
+            result_value = round(self.operands[-1], 5) if len(self.operands) > 0 else None
+            self.socket_server.send_result(result)
+
+            return result_value
 
         except ZeroDivisionError:
             return "Invalid Operation"
         except Exception as exception:
-            print(str(exception))
+            print(f"Error Occurred: ${exception}")
             return f"Error Occurred"
 
     def proceed(self, frame, landmarks):
@@ -107,7 +113,8 @@ class Arithmetic:
         cv2.putText(frame, text, (x_pos, y_pos), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2, cv2.LINE_AA)
 
         symbol = self.detector.detect_symbol(landmarks)
-        print(f"Detected Symbol: {symbol}")
+        if(symbol != -1):
+            print(f"Detected Symbol: {symbol}")
 
         valid_symbols = ['=', '+', '-', '*', '^', '/', '(', ')', 'E', 'X']
         if (isinstance(symbol, int) and 0 <= symbol <= 9) or (symbol in valid_symbols and self.result == ""):
@@ -127,7 +134,7 @@ class Arithmetic:
                     if self.result == "":
                         self.expression += str(symbol)
                 config.last_detected_time = current_time
-        
+
         if self.expression == "":
             text = "Proceed any numeric gesture"
             x_pos = 50
