@@ -29,7 +29,7 @@ class SocketServer:
         
             packet = {
                 "type": "landmarks",
-                "data": data
+                "landmarkData": data
             }
         
             json_data = json.dumps(packet).encode('utf-8')
@@ -40,16 +40,17 @@ class SocketServer:
             print(f"⚠ Socket send error: {e}")
 
 
-    def send_result(self, result):
+    def send_symbol(self, symbol):
         try:
             packet = {
-                "type": "arithmetic",
-                "result": result
+                "type": "symbol",
+                "symbolData": {"value": symbol}
             }
-
+            
             json_data = json.dumps(packet).encode('utf-8')
             print(packet)
             self.sock.sendto(json_data, self.server_address)
+        
         except Exception as e:
             print(f"⚠ Socket send error: {e}")
 

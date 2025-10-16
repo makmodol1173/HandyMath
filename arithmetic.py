@@ -93,7 +93,6 @@ class Arithmetic:
                 self.operands.append(result)
     
             result_value = round(self.operands[-1], 5) if len(self.operands) > 0 else None
-            self.socket_server.send_result(result)
 
             return result_value
 
@@ -114,7 +113,8 @@ class Arithmetic:
 
         symbol = self.detector.detect_symbol(landmarks)
         if(symbol != -1):
-            print(f"Detected Symbol: {symbol}")
+            self.socket_server.send_symbol(symbol)
+            print(f"Detected Symbol From Arithmatic: {symbol}")
 
         valid_symbols = ['=', '+', '-', '*', '^', '/', '(', ')', 'E', 'X']
         if (isinstance(symbol, int) and 0 <= symbol <= 9) or (symbol in valid_symbols and self.result == ""):
