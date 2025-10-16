@@ -17,18 +17,15 @@ class SocketServer:
             for hand_landmarks, handedness in zip(landmarks.multi_hand_landmarks, landmarks.multi_handedness):
                 hand_label = handedness.classification[0].label.lower()  # "Left" or "Right"
                 hand_points = []
-        
+                
                 for lm in hand_landmarks.landmark:
-                    hand_points.extend([
-                        int(lm.x * w),
-                        int(h - lm.y * h),
-                        int(lm.z * 1000)
-                    ])
+                    x = int(w - lm.x * w) if hand_label == "right" else int(lm.x * w)
+                    y = int(h - lm.y * h)
+                    z = int(lm.z * 1000)
+
+                    hand_points.extend([x, y, z])
         
-                if hand_label == "left":
-                    data["left"] = hand_points
-                else:
-                    data["right"] = hand_points
+                data[hand_label] = hand_points
         
             packet = {
                 "type": "landmarks",
