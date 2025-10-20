@@ -54,5 +54,19 @@ class SocketServer:
         except Exception as e:
             print(f"⚠ Socket send error: {e}")
 
+    def send_mode(self, mode):
+        try:
+            packet = {
+                "type": "mode",
+                "modeData": {"value": mode}
+            }
+            
+            json_data = json.dumps(packet).encode('utf-8')
+            print(packet)
+            self.sock.sendto(json_data, self.server_address)
+        
+        except Exception as e:
+            print(f"⚠ Socket send error: {e}")
+
     def close(self):
         self.sock.close()
