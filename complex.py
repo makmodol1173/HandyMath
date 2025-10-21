@@ -2,10 +2,12 @@ import cv2
 import time
 from detector import Detector
 import config
+from socket_server import SocketServer
 
 class Complex:
     def __init__(self):
         self.detector = Detector()
+        self.socket_server = SocketServer()
 
     def proceed(self, frame, landmarks):
         current_time = time.time()
@@ -17,6 +19,7 @@ class Complex:
         (text_width, text_height), _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 1, 2)
         x_pos = 50
         y_pos = 50
+        self.socket_server.send_expression(text)
         cv2.putText(frame, text, (x_pos, y_pos), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2, cv2.LINE_AA)
 
         # Back menu
