@@ -44,7 +44,7 @@ class SocketServer:
         try:
             packet = {
                 "type": "symbol",
-                "symbolData": {"value": symbol}
+                "symbolData": symbol
             }
             
             json_data = json.dumps(packet).encode('utf-8')
@@ -58,7 +58,35 @@ class SocketServer:
         try:
             packet = {
                 "type": "mode",
-                "modeData": {"value": mode}
+                "modeData":  mode
+            }
+            
+            json_data = json.dumps(packet).encode('utf-8')
+            print(packet)
+            self.sock.sendto(json_data, self.server_address)
+        
+        except Exception as e:
+            print(f"⚠ Socket send error: {e}")
+
+    def send_expression(self, expression):
+        try:
+            packet = {
+                "type": "expression",
+                "expressionData": expression
+            }
+            
+            json_data = json.dumps(packet).encode('utf-8')
+            print(packet)
+            self.sock.sendto(json_data, self.server_address)
+        
+        except Exception as e:
+            print(f"⚠ Socket send error: {e}")
+
+    def send_result(self, result):
+        try:
+            packet = {
+                "type": "result",
+                "resultData": result
             }
             
             json_data = json.dumps(packet).encode('utf-8')

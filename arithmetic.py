@@ -145,12 +145,14 @@ class Arithmetic:
             text = f"Expression: {self.expression}"
             x_pos = 50
             y_pos = 100
+            self.socket_server.send_expression(self.expression)
             cv2.putText(frame, text, (x_pos, y_pos), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
 
         if self.result != "":
             text = f"Result: {self.result}"
             x_pos = 50
             y_pos = 150
+            self.socket_server.send_result(self.result)
             cv2.putText(frame, text, (x_pos, y_pos), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
 
             # Back menu
