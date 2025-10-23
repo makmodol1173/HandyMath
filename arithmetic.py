@@ -130,6 +130,9 @@ class Arithmetic:
                     self.expression = ""
                     self.result = ""
                     config.mode = None
+                    self.socket_server.send_mode(config.mode)
+                    self.socket_server.send_expression(self.expression)
+                    self.socket_server.send_result(self.result)
                 else:
                     if self.result == "":
                         self.expression += str(symbol)
