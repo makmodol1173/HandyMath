@@ -10,8 +10,10 @@ class SocketServer:
             "landmarkData": {"left": [], "right": []},
             "symbolData": None,
             "modeData": None,
+            "subModeData": None,
             "expressionData": None,
-            "resultData": None
+            "resultData": None,
+            "matrixData": None
         }
 
     def send_landmarks(self, landmarks, frame_shape):
@@ -41,6 +43,13 @@ class SocketServer:
         except Exception as e:
             print(f"⚠ Socket send error: {e}")
 
+    def send_matrix(self, matrixData, key):
+        data = ["", "", "", "", "", "", "", "", "", ""]
+        data[key] = matrixData
+        self.state["type"] = "matrix"
+        self.state["matrixData"] = data
+        self.send_state()
+
     def send_symbol(self, symbol):
         self.state["type"] = "symbol"
         self.state["symbolData"] = symbol
@@ -49,6 +58,11 @@ class SocketServer:
     def send_mode(self, mode):
         self.state["type"] = "mode"
         self.state["modeData"] = mode
+        self.send_state()
+
+    def send_submode(self, subMode):
+        self.state["type"] = "subMode"
+        self.state["subModeData"] = subMode
         self.send_state()
 
     def send_expression(self, expression):
