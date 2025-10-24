@@ -20,6 +20,15 @@ class Matrix:
         self.matrix_input_completed = False
         self.socket_server = SocketServer()
         self.socket_data = [""] * 10
+        self.matrix_menu_options = [
+            "Select Your Choice: ",
+            "1. Dimension       ",
+            "2. Input           ",
+            "3. Select          ",
+            "4. Operation       ",
+            "0. Exit            "
+        ]
+
 
     def validate_square(self, matrix):
         if matrix.shape[0] != matrix.shape[1]:
@@ -47,7 +56,10 @@ class Matrix:
 
         # Handle initial menu and cooldown
         if self.mode is None:
-            self.interface.show_matrix_menu(frame)
+            self.interface.show_matrix_menu(frame, self.matrix_menu_options)
+            for i in range(min(len(self.matrix_menu_options), len(self.socket_data))):
+                self.socket_data[i] = self.matrix_menu_options[i]
+
             if isinstance(symbol, int) and 0 <= symbol <= 4:
                 if current_time - config.last_detected_time >= config.debounce_interval:
                     self.mode = [None, "Dimension", "Input", "Select", "Operation"][symbol]
@@ -61,6 +73,7 @@ class Matrix:
             (text_width, text_height), _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 1, 2)
             x_pos = 50
             y_pos = 100
+            self.socket_data = ["" for _ in range(10)]
             self.socket_data[0] = text
             cv2.putText(frame, text, (x_pos, y_pos), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2, cv2.LINE_AA)
 
