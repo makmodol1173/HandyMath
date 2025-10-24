@@ -19,6 +19,7 @@ class Matrix:
         self.operand_matrices = []
         self.matrix_input_completed = False
         self.socket_server = SocketServer()
+        self.socket_data = [""] * 10
 
     def validate_square(self, matrix):
         if matrix.shape[0] != matrix.shape[1]:
@@ -60,7 +61,7 @@ class Matrix:
             (text_width, text_height), _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 1, 2)
             x_pos = 50
             y_pos = 100
-            self.socket_server.send_submode(self.mode)
+            self.socket_data[0] = text
             cv2.putText(frame, text, (x_pos, y_pos), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2, cv2.LINE_AA)
 
         handlers = {
@@ -71,6 +72,8 @@ class Matrix:
         }
         if self.mode in handlers:
             handlers[self.mode](frame, symbol)
+
+        self.socket_server.send_matrix(self.socket_data)
 
     def handle_determinant_mode(self, frame, symbol):
         current_time = time.time()
@@ -377,7 +380,7 @@ class Matrix:
         if self.current_matrix is None:
             text = f"Enter Matrix ID(1-9):"
             cv2.putText(frame, text, (50, 150), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
-            self.socket_server.send_matrix(text, 1)
+            self.socket_data[1] = text
             if isinstance(symbol, int) and 1 <= symbol <= 9:
                 if current_time - config.last_detected_time >= config.debounce_interval:
                     self.current_matrix = symbol
@@ -386,13 +389,13 @@ class Matrix:
         # Displaying current matrix
         elif self.current_matrix is not None:
             text = f"Created Matrix: M{self.current_matrix}"
-            self.socket_server.send_matrix(text, 1)
+            self.socket_data[1] = text
             cv2.putText(frame, text, (50, 150), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
 
         # Handle row input
         if self.current_matrix is not None and self.current_row == 0:
             text = f"Enter number of row (1-9):"
-            self.socket_server.send_matrix(text, 2)
+            self.socket_data[2] = text
             cv2.putText(frame, text, (50, 200), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
             if isinstance(symbol, int) and 1 <= symbol <= 9:
                 if current_time - config.last_detected_time >= config.debounce_interval:

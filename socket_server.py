@@ -43,11 +43,9 @@ class SocketServer:
         except Exception as e:
             print(f"⚠ Socket send error: {e}")
 
-    def send_matrix(self, matrixData, key):
-        data = ["", "", "", "", "", "", "", "", "", ""]
-        data[key] = matrixData
+    def send_matrix(self, matrixData):
         self.state["type"] = "matrix"
-        self.state["matrixData"] = data
+        self.state["matrixData"] = matrixData
         self.send_state()
 
     def send_symbol(self, symbol):
@@ -58,11 +56,6 @@ class SocketServer:
     def send_mode(self, mode):
         self.state["type"] = "mode"
         self.state["modeData"] = mode
-        self.send_state()
-
-    def send_submode(self, subMode):
-        self.state["type"] = "subMode"
-        self.state["subModeData"] = subMode
         self.send_state()
 
     def send_expression(self, expression):
