@@ -6,7 +6,6 @@ from matrix import Matrix
 from complex import Complex
 from interface import Interface
 from socket_server import SocketServer
-
 import config
 
 def main():
@@ -21,12 +20,21 @@ def main():
     detector = Detector()
     interface = Interface()
     socket_server = SocketServer()
+    board_data = [""] * 10
 
     handlers = {
         "Arithmetic": Arithmetic().proceed,
         "Matrix": Matrix().proceed,
         "Complex": Complex().proceed,
     }
+
+    main_menu_options = [
+        "Select Your Choice:",
+        "1. Arithmetic",
+        "2. Matrix",
+        "3. Complex",
+        "0. Exit"
+    ]
 
     prev_time = time.time()
 
@@ -43,7 +51,9 @@ def main():
             socket_server.send_landmarks(landmarks, frame.shape)
 
             if not config.is_activated:
-                cv2.putText(frame, "Welcome to HandyMath", (400, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
+                text = "Welcome to HandyMath"
+                cv2.putText(frame, text, (400, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
+                board_data[5] = text
                 if detector.detect_thumb(landmarks):
                     config.is_activated = True
                     config.last_detected_time = time.time()
@@ -57,7 +67,13 @@ def main():
                 prev_time = time.time()
 
             if config.mode is None and config.is_activated:
-                interface.show_main_menu(frame)
+                interface.show_main_menu(frame, main_menu_options)
+                for i in range(len(board_data)):
+                    if i < len(main_menu_options):
+                        board_data[i] = main_menu_options[i]
+                    else:
+                        board_data[i] = ""
+
                 symbol = detector.detect_symbol(landmarks)
                 if(symbol != -1):
                     print(f"Detected Symbol: {symbol}")
@@ -69,7 +85,8 @@ def main():
 
             elif config.mode is not None and config.is_activated:
                 text = f"Mode: {config.mode}"
-                socket_server.send_mode(text)
+                board_data = ["" for _ in range(10)]
+                board_data[9] = text
                 text_sizes = [cv2.getTextSize(option, cv2.FONT_HERSHEY_SIMPLEX, 0.8, 2)[0] for option in ["Arithmetic", "Matrix", "Complex"]]
                 max_width = max([w for (w, h) in text_sizes])
                 x_pos = frame.shape[1] - max_width - 170
@@ -78,6 +95,8 @@ def main():
 
             if handler := handlers.get(config.mode):
                 handler(frame, landmarks)
+            
+            socket_server.send_board_data(board_data)
 
             cv2.imshow('HandyMath', frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
