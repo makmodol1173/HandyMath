@@ -7,7 +7,7 @@ from socket_server import SocketServer
 import config
 
 class Matrix:
-    def __init__(self):
+    def __init__(self, board_data):
         self.mode = None
         self.operation_mode = None
         self.detector = Detector()
@@ -19,7 +19,7 @@ class Matrix:
         self.operand_matrices = []
         self.matrix_input_completed = False
         self.socket_server = SocketServer()
-        self.socket_data = [""] * 10
+        self.board_data = board_data
         self.matrix_menu_options = [
             "Select Your Choice: ",
             "1. Dimension       ",
@@ -28,7 +28,6 @@ class Matrix:
             "4. Operation       ",
             "0. Exit            "
         ]
-
 
     def validate_square(self, matrix):
         if matrix.shape[0] != matrix.shape[1]:
@@ -57,9 +56,11 @@ class Matrix:
         # Handle initial menu and cooldown
         if self.mode is None:
             self.interface.show_matrix_menu(frame, self.matrix_menu_options)
-            for i in range(min(len(self.matrix_menu_options), len(self.socket_data))):
-                self.socket_data[i] = self.matrix_menu_options[i]
-
+            for i in range(1, 8):
+                if i < len(self.matrix_menu_options):
+                    self.board_data[i] = self.matrix_menu_options[i]
+                else:
+                    self.board_data[i] = ""
             if isinstance(symbol, int) and 0 <= symbol <= 4:
                 if current_time - config.last_detected_time >= config.debounce_interval:
                     self.mode = [None, "Dimension", "Input", "Select", "Operation"][symbol]
@@ -73,8 +74,9 @@ class Matrix:
             (text_width, text_height), _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 1, 2)
             x_pos = 50
             y_pos = 100
-            self.socket_data = ["" for _ in range(10)]
-            self.socket_data[0] = text
+            self.board_data[0] = text
+            for i in range(1, 8):
+                self.board_data[i] = ""
             cv2.putText(frame, text, (x_pos, y_pos), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2, cv2.LINE_AA)
 
         handlers = {
@@ -86,7 +88,7 @@ class Matrix:
         if self.mode in handlers:
             handlers[self.mode](frame, symbol)
 
-        self.socket_server.send_matrix(self.socket_data)
+        self.socket_server.send_board_data(self.board_data)
 
     def handle_determinant_mode(self, frame, symbol):
         current_time = time.time()
@@ -393,7 +395,6 @@ class Matrix:
         if self.current_matrix is None:
             text = f"Enter Matrix ID(1-9):"
             cv2.putText(frame, text, (50, 150), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
-            self.socket_data[1] = text
             if isinstance(symbol, int) and 1 <= symbol <= 9:
                 if current_time - config.last_detected_time >= config.debounce_interval:
                     self.current_matrix = symbol
@@ -402,13 +403,11 @@ class Matrix:
         # Displaying current matrix
         elif self.current_matrix is not None:
             text = f"Created Matrix: M{self.current_matrix}"
-            self.socket_data[1] = text
             cv2.putText(frame, text, (50, 150), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
 
         # Handle row input
         if self.current_matrix is not None and self.current_row == 0:
             text = f"Enter number of row (1-9):"
-            self.socket_data[2] = text
             cv2.putText(frame, text, (50, 200), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
             if isinstance(symbol, int) and 1 <= symbol <= 9:
                 if current_time - config.last_detected_time >= config.debounce_interval:

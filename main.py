@@ -23,9 +23,9 @@ def main():
     board_data = [""] * 10
 
     handlers = {
-        "Arithmetic": Arithmetic().proceed,
-        "Matrix": Matrix().proceed,
-        "Complex": Complex().proceed,
+        "Arithmetic": Arithmetic(board_data).proceed,
+        "Matrix": Matrix(board_data).proceed,
+        "Complex": Complex(board_data).proceed,
     }
 
     main_menu_options = [
@@ -53,6 +53,8 @@ def main():
             if not config.is_activated:
                 text = "Welcome to HandyMath"
                 cv2.putText(frame, text, (400, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
+                for i in range(0, 9):
+                    board_data[i] = ""
                 board_data[5] = text
                 if detector.detect_thumb(landmarks):
                     config.is_activated = True
@@ -68,6 +70,7 @@ def main():
 
             if config.mode is None and config.is_activated:
                 interface.show_main_menu(frame, main_menu_options)
+                board_data[5] = ""
                 for i in range(len(board_data)):
                     if i < len(main_menu_options):
                         board_data[i] = main_menu_options[i]
@@ -85,7 +88,7 @@ def main():
 
             elif config.mode is not None and config.is_activated:
                 text = f"Mode: {config.mode}"
-                board_data = ["" for _ in range(10)]
+                # board_data = ["" for _ in range(10)]
                 board_data[9] = text
                 text_sizes = [cv2.getTextSize(option, cv2.FONT_HERSHEY_SIMPLEX, 0.8, 2)[0] for option in ["Arithmetic", "Matrix", "Complex"]]
                 max_width = max([w for (w, h) in text_sizes])

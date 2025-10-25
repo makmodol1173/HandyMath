@@ -8,13 +8,14 @@ from socket_server import SocketServer
 
 class Arithmetic:
 
-    def __init__(self):
+    def __init__(self, board_data):
         self.operators = []
         self.operands = []
         self.expression = ""
         self.result = ""
         self.detector = Detector()
         self.socket_server = SocketServer()
+        self.board_data = board_data
 
     def precedence(self, operator):
         if operator == '+' or operator == '-':
@@ -104,6 +105,8 @@ class Arithmetic:
 
     def proceed(self, frame, landmarks):
         current_time = time.time()
+        for i in range(0, 9):
+            self.board_data[i] = ""
 
         text = "Arithmetic Calculation"
         (text_width, text_height), _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 1, 2)
@@ -130,13 +133,13 @@ class Arithmetic:
                     self.expression = ""
                     self.result = ""
                     config.mode = None
-                    self.socket_server.send_mode(config.mode)
-                    self.socket_server.send_expression(self.expression)
-                    self.socket_server.send_result(self.result)
                 else:
                     if self.result == "":
                         self.expression += str(symbol)
                 config.last_detected_time = current_time
+                self.board_data[9] = config.mode
+                self.board_data[0] = self.expression
+                self.board_data[1] = self.result
 
         if self.expression == "":
             text = "Proceed any numeric gesture"
@@ -148,16 +151,18 @@ class Arithmetic:
             text = f"Expression: {self.expression}"
             x_pos = 50
             y_pos = 100
-            self.socket_server.send_expression(self.expression)
+            self.board_data[0] = self.expression
             cv2.putText(frame, text, (x_pos, y_pos), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
 
         if self.result != "":
             text = f"Result: {self.result}"
             x_pos = 50
             y_pos = 150
-            self.socket_server.send_result(self.result)
+            self.board_data[1] = self.result
             cv2.putText(frame, text, (x_pos, y_pos), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
 
             # Back menu
             text = "0. Exit"
             cv2.putText(frame, text, (50, 200), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+
+        self.socket_server.send_board_data(self.board_data)
