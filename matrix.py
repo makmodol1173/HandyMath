@@ -56,7 +56,7 @@ class Matrix:
         # Handle initial menu and cooldown
         if self.mode is None:
             self.interface.show_matrix_menu(frame, self.matrix_menu_options)
-            for i in range(1, 8):
+            for i in range(0, 8):
                 if i < len(self.matrix_menu_options):
                     self.board_data[i] = self.matrix_menu_options[i]
                 else:
@@ -394,6 +394,7 @@ class Matrix:
         # Handle matrix id input
         if self.current_matrix is None:
             text = f"Enter Matrix ID(1-9):"
+            self.board_data[1] = text
             cv2.putText(frame, text, (50, 150), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
             if isinstance(symbol, int) and 1 <= symbol <= 9:
                 if current_time - config.last_detected_time >= config.debounce_interval:
@@ -403,11 +404,13 @@ class Matrix:
         # Displaying current matrix
         elif self.current_matrix is not None:
             text = f"Created Matrix: M{self.current_matrix}"
+            self.board_data[1] = text
             cv2.putText(frame, text, (50, 150), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
 
         # Handle row input
         if self.current_matrix is not None and self.current_row == 0:
             text = f"Enter number of row (1-9):"
+            self.board_data[2] = text
             cv2.putText(frame, text, (50, 200), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
             if isinstance(symbol, int) and 1 <= symbol <= 9:
                 if current_time - config.last_detected_time >= config.debounce_interval:
@@ -416,24 +419,32 @@ class Matrix:
 
         # Displaying current row
         elif self.current_matrix is not None and self.current_row != 0:
-            cv2.putText(frame, f"Selected Row: {self.current_row}", (50, 200), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+            text = f"Selected Row: {self.current_row}"
+            cv2.putText(frame, text, (50, 200), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+            self.board_data[2] = text
 
         # Handle column input
         if self.current_matrix is not None and self.current_row != 0 and self.current_col == 0:
-            cv2.putText(frame, f"Enter number of column (1-9):", (50, 250), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+            text = f"Enter number of column (1-9):"
+            cv2.putText(frame, text, (50, 250), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+            self.board_data[3] = text
             if isinstance(symbol, int) and 1 <= symbol <= 9:
                 if current_time - config.last_detected_time >= config.debounce_interval:
                     self.current_col = symbol
                     config.last_detected_time = current_time
         # Displaying current column
         elif self.current_matrix is not None and self.current_row != 0 and self.current_col != 0:
-            cv2.putText(frame, f"Selected Column: {self.current_col}", (50, 250), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+            text = f"Selected Column: {self.current_col}"
+            cv2.putText(frame, text, (50, 250), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+            self.board_data[3] = text
 
         # Create matrix if dimensions are set
         if self.current_matrix is not None and self.current_row != 0 and self.current_col != 0:
             if self.current_matrix not in self.matrices:
                 self.matrices[self.current_matrix] = np.zeros((self.current_row, self.current_col))
-            cv2.putText(frame, f"Matrix M{self.current_matrix} created with dimensions {self.current_row}x{self.current_col}", (50, 300), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+            text = f"Matrix M{self.current_matrix} created with dimensions {self.current_row}x{self.current_col}"
+            cv2.putText(frame, text, (50, 300), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+            self.board_data[4] = text
 
             # Reset mode after matrix creation
             if current_time - config.last_detected_time >= config.debounce_interval:
@@ -441,6 +452,10 @@ class Matrix:
                 self.current_matrix = None
                 self.current_row = 0
                 self.current_col = 0
+                self.board_data[0] = ""
+                self.board_data[1] = ""
+                self.board_data[2] = ""
+                self.board_data[3] = ""
 
     def get_matrix_string(self, matrix_id):
         if matrix_id in self.matrices:
