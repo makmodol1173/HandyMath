@@ -354,6 +354,8 @@ class Matrix:
         if self.current_matrix is None:
             text = "Select Matrix ID(1-9):"
             cv2.putText(frame, text, (50, 150), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+            self.board_data[1] = text
+
             if isinstance(symbol, int) and 1 <= symbol <= 9:
                 if current_time - config.last_detected_time >= config.debounce_interval:
                     if symbol in self.matrices:
@@ -361,26 +363,34 @@ class Matrix:
                         config.last_detected_time = current_time
                     else:
                         exit_pos = 250
-                        cv2.putText(frame, f"Selected Matrices: M{symbol} not found", (50, 200), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
-        
+                        text = f"Selected Matrices: M{symbol} not found"
+                        cv2.putText(frame, text, (50, 200), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+                        self.board_data[1] = text
+
         # Displaying selected matrix id
         elif self.current_matrix is not None and self.current_matrix in self.matrices:
-            cv2.putText(frame, f"Selected Matrix: M{self.current_matrix}", (50, 150), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+            text = f"Selected Matrix: M{self.current_matrix}"
+            cv2.putText(frame, text, (50, 150), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+            self.board_data[1] = text
 
         # Show matrix content if selected
         y_offset = 200
+        last_item = 2
         if self.current_matrix is not None and self.current_matrix in self.matrices:
             matrix_str = self.get_matrix_string(self.current_matrix)
             lines = matrix_str.split('\n')
-            for i, line in enumerate(lines):
+            for i, line in enumerate(lines, start = 2):
                 cv2.putText(frame, line, (50, y_offset), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 0), 2)
                 y_offset += 30
+                self.board_data[i] = line
+                last_item = i
             exit_pos = y_offset + 20
 
         # Back menu
         text = "0. Exit"
         y_pos = exit_pos
         cv2.putText(frame, text, (50, y_pos), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+        self.board_data[last_item] = text
         if isinstance(symbol, int) and symbol == 0:
             if current_time - config.last_detected_time >= config.debounce_interval:
                 self.mode = None
@@ -388,6 +398,8 @@ class Matrix:
                 self.current_row = 0
                 self.current_col = 0 
                 config.last_detected_time = current_time
+                for i in range(0, last_item):
+                    self.board_data[i] = ""
 
     def handle_dimension_mode(self, frame, symbol):
         current_time = time.time()
