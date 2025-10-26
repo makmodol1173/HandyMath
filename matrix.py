@@ -193,9 +193,11 @@ class Matrix:
     def handle_binary_operation(self, frame, symbol, operator):
         current_time = time.time()
         exit_pos = 250
+        last_item = 3
         if len(self.operand_matrices) == 0:
             text = "Select Matrix ID(1-9):"
             cv2.putText(frame, text, (50, 200), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+            self.board_data[2] = text
             if isinstance(symbol, int) and 1 <= symbol <= 9:
                 if current_time - config.last_detected_time >= config.debounce_interval:
                     if symbol in self.matrices:
@@ -203,12 +205,16 @@ class Matrix:
                         config.last_detected_time = current_time
                     else:
                         exit_pos = 300
-                        cv2.putText(frame, f"Selected Matrices: M{symbol} not found", (50, 250), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+                        last_item = last_item + 1
+                        text = f"Selected Matrices: M{symbol} not found"
+                        cv2.putText(frame, text, (50, 250), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+                        self.board_data[3] = text
 
         elif len(self.operand_matrices) == 1:
             exit_pos = exit_pos + 50
             text = "Select another Matrix ID(1-9):"
             cv2.putText(frame, text, (50, 250), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+            self.board_data[3] = text
             if isinstance(symbol, int) and 1 <= symbol <= 9:
                 if current_time - config.last_detected_time >= config.debounce_interval:
                     if symbol in self.matrices:
@@ -216,39 +222,55 @@ class Matrix:
                         config.last_detected_time = current_time
                     else:
                         exit_pos = 350
-                        cv2.putText(frame, f"Selected Matrices: M{symbol} not found", (50, 300), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+                        last_item = last_item + 1
+                        text = f"Selected Matrices: M{symbol} not found"
+                        cv2.putText(frame, text, (50, 300), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+                        self.board_data[4] = text
         
         elif len(self.operand_matrices) == 2:
             m1 = self.matrices[self.operand_matrices[0]]
             m2 = self.matrices[self.operand_matrices[1]]
             try:
                 if (operator in ["+", "-"] and m1.shape != m2.shape) or (operator == "*" and m1.shape[1] != m2.shape[0]):
-                    raise ValueError("Shape mismatch")
+                    text = "Shape mismatch"
+                    self.board_data[4] = text
+                    raise ValueError(text)
                 self.matrices["R"] = m1 + m2 if operator == "+" else m1 - m2 if operator == "-" else np.matmul(m1, m2)
             except ValueError as exception:
                 exit_pos = 350
+                last_item = last_item + 1
                 cv2.putText(frame, f"{exception}", (50, 300), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
-        
+
         if len(self.operand_matrices) >= 1:
-            cv2.putText(frame, f"Selected Matrices: M{self.operand_matrices[0]}", (50, 200), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+            text = f"Selected Matrices: M{self.operand_matrices[0]}"
+            cv2.putText(frame, text, (50, 200), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+            self.board_data[2] = text
+            last_item = last_item + 1
         
         if len(self.operand_matrices) >= 2:
-            cv2.putText(frame, f"Selected Matrices: M{self.operand_matrices[1]}", (50, 250), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+            text = f"Selected Matrices: M{self.operand_matrices[1]}"
+            cv2.putText(frame, text, (50, 250), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+            self.board_data[3] = text
+            last_item = last_item + 1
         
         if "R" in self.matrices:
             cv2.putText(frame, "Result of Addition:", (50, 300), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
             y_offset = 350
             matrix_str = self.get_matrix_string("R")
             lines = matrix_str.split('\n')
-            for i, line in enumerate(lines):
+            for i, line in enumerate(lines, start = 4):
                 cv2.putText(frame, line, (50, y_offset), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 0), 2)
                 y_offset += 30
-            exit_pos = y_offset + 20        
+                self.board_data[i] = line
+                last_item = i
+            exit_pos = y_offset + 20  
+                  
             
         # Back menu
         text = "0. Exit"
         y_pos = exit_pos
         cv2.putText(frame, text, (50, y_pos), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+        self.board_data[last_item] = text
         if isinstance(symbol, int) and symbol == 0:
             if current_time - config.last_detected_time >= config.debounce_interval:
                 self.operation_mode = None
@@ -263,7 +285,7 @@ class Matrix:
     def handle_operation_mode(self, frame, symbol):
         if self.operation_mode is None:
             self.interface.show_matrix_operation_menu(frame, self.matrix_operation_menu_options)
-            for i in range(len(self.board_data)):
+            for i in range(len(self.board_data) - 1):
                 if i < len(self.matrix_operation_menu_options):
                     self.board_data[i] = self.matrix_operation_menu_options[i]
                 else:
