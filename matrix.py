@@ -144,9 +144,11 @@ class Matrix:
     def handle_unary_operation(self, frame, symbol, operator):
         current_time = time.time()
         exit_pos = 250
+        last_item = 3
         if len(self.operand_matrices) == 0:
             text = "Select Matrix ID(1-9):"
             cv2.putText(frame, text, (50, 200), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+            self.board_data[2] = text
             if isinstance(symbol, int) and 1 <= symbol <= 9:
                 if current_time - config.last_detected_time >= config.debounce_interval:
                     if symbol in self.matrices:
@@ -154,31 +156,40 @@ class Matrix:
                         config.last_detected_time = current_time
                     else:
                         exit_pos = 300
-                        cv2.putText(frame, f"Selected Matrices: M{symbol} not found", (50, 250), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+                        text = f"Selected Matrices: M{symbol} not found"
+                        cv2.putText(frame, text, (50, 250), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+                        self.board_data[3] = text
+                        last_item = last_item + 1
 
         elif len(self.operand_matrices) == 1:
-            cv2.putText(frame, f"Selected Matrices: M{self.operand_matrices[0]}", (50, 200), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+            text = f"Selected Matrices: M{self.operand_matrices[0]}"
+            cv2.putText(frame, text, (50, 200), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+            self.board_data[2] = text
             try:
                 matrix = self.matrices[self.operand_matrices[0]]
                 self.matrices["R"] = self.safe_inverse(matrix) if operator == "INV" else matrix.T
             except (ValueError, np.linalg.LinAlgError) as exception:
                 exit_pos = 300
                 cv2.putText(frame, f"{exception}", (50, 250), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
+                self.board_data[3] = exception
 
         if "R" in self.matrices:
             cv2.putText(frame, f"Result of {"Inverse" if operator == "INV" else "Transponse"} :", (50, 250), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
             y_offset = 300
             matrix_str = self.get_matrix_string("R")
             lines = matrix_str.split('\n')
-            for i, line in enumerate(lines):
+            for i, line in enumerate(lines, 3):
                 cv2.putText(frame, line, (50, y_offset), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 0), 2)
                 y_offset += 30 
+                self.board_data[i] = line
+                last_item = i
             exit_pos = y_offset + 20
             
         # Back menu
         text = "0. Exit"
         y_pos = exit_pos
         cv2.putText(frame, text, (50, y_pos), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+        self.board_data[last_item] = text
         if isinstance(symbol, int) and symbol == 0:
             if current_time - config.last_detected_time >= config.debounce_interval:
                 self.operation_mode = None
@@ -233,12 +244,12 @@ class Matrix:
             try:
                 if (operator in ["+", "-"] and m1.shape != m2.shape) or (operator == "*" and m1.shape[1] != m2.shape[0]):
                     text = "Shape mismatch"
-                    self.board_data[4] = text
                     raise ValueError(text)
                 self.matrices["R"] = m1 + m2 if operator == "+" else m1 - m2 if operator == "-" else np.matmul(m1, m2)
             except ValueError as exception:
                 exit_pos = 350
                 last_item = last_item + 1
+                self.board_data[4] = exception
                 cv2.putText(frame, f"{exception}", (50, 300), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
 
         if len(self.operand_matrices) >= 1:
