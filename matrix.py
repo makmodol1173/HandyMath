@@ -28,6 +28,16 @@ class Matrix:
             "4. Operation       ",
             "0. Exit            "
         ]
+        self.matrix_operation_menu_options = [
+            "Select Your Choice:",
+            "1. Addition",
+            "2. Subtraction",
+            "3. Multiplication",
+            "4. Transponse",
+            "5. Determinant",
+            "6. Inverse",
+            "0. Exit"
+        ]
 
     def validate_square(self, matrix):
         if matrix.shape[0] != matrix.shape[1]:
@@ -252,7 +262,13 @@ class Matrix:
 
     def handle_operation_mode(self, frame, symbol):
         if self.operation_mode is None:
-            self.interface.show_matrix_operation_menu(frame)
+            self.interface.show_matrix_operation_menu(frame, self.matrix_operation_menu_options)
+            for i in range(len(self.board_data)):
+                if i < len(self.matrix_operation_menu_options):
+                    self.board_data[i] = self.matrix_operation_menu_options[i]
+                else:
+                    self.board_data[i] = ""
+
             if isinstance(symbol, int) and 0 <= symbol <= 6:
                 if time.time() - config.last_detected_time >= config.debounce_interval:
                     self.operation_mode = [None, "Addition", "Subtraction", "Multiplication", "Transpose", "Determinant", "Inverse"][symbol]
@@ -262,10 +278,11 @@ class Matrix:
         
         else:
             # Show current operation mode label
-            text = f"Matrix Operation Mode: {self.operation_mode}"
+            text = f"Operation Mode: {self.operation_mode}"
             x_pos = 50
             y_pos = 150
             cv2.putText(frame, text, (x_pos, y_pos), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2, cv2.LINE_AA)
+            self.board_data[1] = text
 
         operations = {
             "Addition": lambda: self.handle_binary_operation(frame, symbol, "+"),
